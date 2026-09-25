@@ -10,6 +10,12 @@ __pycache__/
 htmlcov/
 .tox/
 .nox/
+.hypothesis/
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+.python-version
 
 # Virtual environments
 .venv/
@@ -34,6 +40,7 @@ data/
 *.log
 logs/
 reports/generated/
+pip-log.txt
 
 # Streamlit
 .streamlit/secrets.toml
