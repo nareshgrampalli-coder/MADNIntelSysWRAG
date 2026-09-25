@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 1 - News Ingestion: **complete**
+Phase 2 - Article Processing: **complete**
 
 ## Completed
 
@@ -15,6 +15,9 @@ Phase 1 - News Ingestion: **complete**
 - Added RSS parsing, bounded retries, normalized article fields, and source metadata.
 - Added Technology, Finance, and Politics fetcher boundaries.
 - Added URL/content-hash deduplication and fixture-based ingestion tests.
+- Added deterministic HTML/boilerplate cleaning.
+- Added summary, category tags, and lightweight entity extraction.
+- Added bounded chunking with source, date, category, and enrichment metadata.
 
 ## Validation
 
@@ -22,8 +25,9 @@ Phase 1 - News Ingestion: **complete**
 - Static editor diagnostics report no errors in `src` or `tests`.
 - Phase 0 runtime tests passed after the Python environment became available.
 - Phase 1 tests cover RSS normalization, timezone handling, duplicate content, source failure isolation, and retry behavior.
+- Phase 2 tests cover cleaning, enrichment, provenance, chunk limits, and invalid configuration.
 - No processing, LLM, vector database, scheduler, UI, or deployment behavior has been started.
 
 ## Next phase
 
-Phase 2 - Article Processing will begin only after explicit confirmation. It will add deterministic cleaning, summaries/tags/entities, chunking, and provenance-preserving tests.
+Phase 3 - Knowledge Base will begin only after explicit confirmation. It will add embeddings, ChromaDB persistence, metadata filtering, idempotent upserts, and retrieval tests.

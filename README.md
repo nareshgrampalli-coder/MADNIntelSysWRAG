@@ -25,6 +25,7 @@ The project currently uses only the Python standard library at runtime. Provider
 - `src/news_rag/models.py`: shared domain contracts
 - `src/news_rag/config.py`: environment-backed settings
 - `src/news_rag/logging_config.py`: application logging setup
+- `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
 - `tests/`: automated tests
 - `SystemRequirements.md`: original requirements
 - `PLAN.md`: phased implementation plan
