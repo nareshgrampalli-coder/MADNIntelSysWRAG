@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 3 - Knowledge Base: **complete**
+Phase 4 - Orchestration: **complete**
 
 ## Completed
 
@@ -21,6 +21,9 @@ Phase 3 - Knowledge Base: **complete**
 - Added deterministic local embeddings for development and tests.
 - Added persistent JSON vector storage with idempotent upserts, category/date filters, retrieval, and reset support.
 - Added an optional ChromaDB adapter and `vector` dependency extra for production storage.
+- Added a manual end-to-end pipeline from fetchers through processing to vector storage.
+- Added run reports with timestamps, counts, and error details.
+- Added fetcher failure isolation and a lightweight interval scheduler with graceful stopping.
 
 ## Validation
 
@@ -31,8 +34,9 @@ Phase 3 - Knowledge Base: **complete**
 - Phase 2 tests cover cleaning, enrichment, provenance, chunk limits, and invalid configuration.
 - Phase 3 tests cover deterministic embeddings, persistence, idempotent upserts, metadata filters, and reset behavior.
 - ChromaDB integration remains optional because it is not installed in the current environment; the adapter is ready for environments that install the `vector` extra.
-- No scheduler, UI, or deployment behavior has been started.
+- Phase 4 tests cover end-to-end pipeline execution and partial fetcher failure handling.
+- No UI or deployment behavior has been started.
 
 ## Next phase
 
-Phase 4 - Orchestration will begin only after explicit confirmation. It will connect fetch, processing, embedding, and storage into manual and scheduled runs with retries and run summaries.
+Phase 5 - RAG Query Engine will begin only after explicit confirmation. It will add date/category query interpretation, retrieval ranking, grounded answers, citations, and no-answer behavior.

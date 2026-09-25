@@ -27,6 +27,7 @@ The project currently uses only the Python standard library at runtime. Provider
 - `src/news_rag/logging_config.py`: application logging setup
 - `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
 - `src/news_rag/vector_store.py`: embeddings and persistent vector-store adapters
+- `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
 - `tests/`: automated tests
 - `SystemRequirements.md`: original requirements
 - `PLAN.md`: phased implementation plan
