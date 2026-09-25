@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 5 - RAG Query Engine: **complete**
+Phase 6 - User Interface: **complete**
 
 ## Completed
 
@@ -27,6 +27,8 @@ Phase 5 - RAG Query Engine: **complete**
 - Added query interpretation for categories, relative date ranges, and explicit dates.
 - Added recency-aware retrieval, grounded extractive answers, source/date citations, and no-evidence refusal behavior.
 - Kept answer generation provider-neutral for a future hosted or local LLM adapter.
+- Added an optional Streamlit chat interface with category/date filters, citations, loading/error states, and manual ingestion controls.
+- Added UI helper tests and documented the optional `ui` dependency extra.
 
 ## Validation
 
@@ -39,8 +41,10 @@ Phase 5 - RAG Query Engine: **complete**
 - ChromaDB integration remains optional because it is not installed in the current environment; the adapter is ready for environments that install the `vector` extra.
 - Phase 4 tests cover end-to-end pipeline execution and partial fetcher failure handling.
 - Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
-- No UI or deployment behavior has been started.
+- Phase 6 tests cover filter composition and citation rendering.
+- Streamlit browser validation is pending because the optional UI dependency is not installed in the current environment.
+- No evaluation or deployment behavior has been started.
 
 ## Next phase
 
-Phase 6 - User Interface will begin only after explicit confirmation. It will add the Streamlit chat workflow, filters, citations, loading/error states, and manual ingestion controls.
+Phase 7 - Evaluation and Documentation will begin only after explicit confirmation. It will add the evaluation question set, scoring report, architecture documentation, demo instructions, and deployment guidance.

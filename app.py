@@ -1,0 +1,101 @@
+"""Streamlit user interface for the News RAG application."""
+
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+from news_rag.config import Settings
+from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, TechnologyFetcher
+from news_rag.models import NewsCategory, QueryResponse
+from news_rag.orchestration import NewsPipeline
+from news_rag.query_engine import QueryEngine
+from news_rag.vector_store import JsonVectorStore
+
+
+def build_store(settings: Settings) -> JsonVectorStore:
+    return JsonVectorStore(settings.vector_store_dir / "vectors.json")
+
+
+def build_pipeline(store: JsonVectorStore) -> NewsPipeline:
+    return NewsPipeline(
+        fetchers=(TechnologyFetcher(), FinanceFetcher(), PoliticsFetcher()),
+        store=store,
+    )
+
+
+def apply_filters(question: str, category: NewsCategory | None, start_date: date | None) -> str:
+    additions: list[str] = []
+    if category:
+        additions.append(category.value)
+    if start_date:
+        additions.append(f"since {start_date.isoformat()}")
+    return f"{question} ({', '.join(additions)})" if additions else question
+
+
+def citation_lines(response: QueryResponse) -> list[str]:
+    return [
+        f"[{citation.title}]({citation.url}) - {citation.source}, {citation.published_at.date().isoformat()}"
+        for citation in response.citations
+    ]
+
+
+def main() -> None:
+    try:
+        import streamlit as st
+    except ImportError as error:
+        raise RuntimeError('Install the "ui" extra to run the Streamlit application') from error
+
+    settings = Settings.from_environment()
+    store = build_store(settings)
+    engine = QueryEngine(store)
+    pipeline = build_pipeline(store)
+
+    st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
+    st.title("News RAG Analyst")
+    st.caption("Answers are generated only from indexed, dated source material.")
+
+    with st.sidebar:
+        st.header("Filters")
+        category_value = st.selectbox("Category", ["All", *[category.value.title() for category in NewsCategory]])
+        start_date = st.date_input("Published after", value=None)
+        st.divider()
+        st.metric("Indexed chunks", store.count())
+        if st.button("Run ingestion", type="secondary"):
+            with st.spinner("Collecting and indexing sources..."):
+                report = pipeline.run_once()
+            if report.succeeded:
+                st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
+            else:
+                st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    question = st.chat_input("Ask about recent technology, finance, or politics news")
+    if question:
+        category = None if category_value == "All" else NewsCategory(category_value.casefold())
+        effective_question = apply_filters(question, category, start_date)
+        st.session_state.messages.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+        with st.chat_message("assistant"):
+            with st.spinner("Searching indexed sources..."):
+                try:
+                    response = engine.answer(effective_question)
+                except Exception as error:
+                    st.error(f"Unable to answer this question: {error}")
+                    return
+            st.markdown(response.answer)
+            if response.citations:
+                with st.expander("Sources"):
+                    for line in citation_lines(response):
+                        st.markdown(line)
+            elif not response.grounded:
+                st.info("No matching sources were found.")
+        st.session_state.messages.append({"role": "assistant", "content": response.answer})
+
+
+if __name__ == "__main__":
+    main()

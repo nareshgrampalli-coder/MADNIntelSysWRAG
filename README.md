@@ -13,20 +13,16 @@ Requires Python 3.11 or newer.
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
+To run the optional Streamlit UI:
+
+```powershell
+py -m pip install -e ".[ui]"
+streamlit run app.py
+```
 py -m pip install -e ".[dev]"
 Copy-Item .env.example .env
 pytest
-```
-
-The project currently uses only the Python standard library at runtime. Provider and ingestion dependencies will be added in the phases that need them.
-
-## Repository structure
-
-- `src/news_rag/models.py`: shared domain contracts
-- `src/news_rag/config.py`: environment-backed settings
-- `src/news_rag/logging_config.py`: application logging setup
-- `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
-- `src/news_rag/vector_store.py`: embeddings and persistent vector-store adapters
+- `app.py`: Streamlit chat interface and manual ingestion controls
 - `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
 - `src/news_rag/query_engine.py`: date-aware retrieval, grounded answers, and citations
 - `tests/`: automated tests

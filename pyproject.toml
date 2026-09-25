@@ -17,6 +17,9 @@ dev = [
 vector = [
     "chromadb>=0.5",
 ]
+ui = [
+    "streamlit>=1.40",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
