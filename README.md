@@ -28,6 +28,7 @@ The project currently uses only the Python standard library at runtime. Provider
 - `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
 - `src/news_rag/vector_store.py`: embeddings and persistent vector-store adapters
 - `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
+- `src/news_rag/query_engine.py`: date-aware retrieval, grounded answers, and citations
 - `tests/`: automated tests
 - `SystemRequirements.md`: original requirements
 - `PLAN.md`: phased implementation plan

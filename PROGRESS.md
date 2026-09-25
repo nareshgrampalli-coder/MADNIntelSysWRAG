@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 4 - Orchestration: **complete**
+Phase 5 - RAG Query Engine: **complete**
 
 ## Completed
 
@@ -24,6 +24,9 @@ Phase 4 - Orchestration: **complete**
 - Added a manual end-to-end pipeline from fetchers through processing to vector storage.
 - Added run reports with timestamps, counts, and error details.
 - Added fetcher failure isolation and a lightweight interval scheduler with graceful stopping.
+- Added query interpretation for categories, relative date ranges, and explicit dates.
+- Added recency-aware retrieval, grounded extractive answers, source/date citations, and no-evidence refusal behavior.
+- Kept answer generation provider-neutral for a future hosted or local LLM adapter.
 
 ## Validation
 
@@ -35,8 +38,9 @@ Phase 4 - Orchestration: **complete**
 - Phase 3 tests cover deterministic embeddings, persistence, idempotent upserts, metadata filters, and reset behavior.
 - ChromaDB integration remains optional because it is not installed in the current environment; the adapter is ready for environments that install the `vector` extra.
 - Phase 4 tests cover end-to-end pipeline execution and partial fetcher failure handling.
+- Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
 - No UI or deployment behavior has been started.
 
 ## Next phase
 
-Phase 5 - RAG Query Engine will begin only after explicit confirmation. It will add date/category query interpretation, retrieval ranking, grounded answers, citations, and no-answer behavior.
+Phase 6 - User Interface will begin only after explicit confirmation. It will add the Streamlit chat workflow, filters, citations, loading/error states, and manual ingestion controls.
