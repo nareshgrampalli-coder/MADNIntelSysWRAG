@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 2 - Article Processing: **complete**
+Phase 3 - Knowledge Base: **complete**
 
 ## Completed
 
@@ -18,6 +18,9 @@ Phase 2 - Article Processing: **complete**
 - Added deterministic HTML/boilerplate cleaning.
 - Added summary, category tags, and lightweight entity extraction.
 - Added bounded chunking with source, date, category, and enrichment metadata.
+- Added deterministic local embeddings for development and tests.
+- Added persistent JSON vector storage with idempotent upserts, category/date filters, retrieval, and reset support.
+- Added an optional ChromaDB adapter and `vector` dependency extra for production storage.
 
 ## Validation
 
@@ -26,8 +29,10 @@ Phase 2 - Article Processing: **complete**
 - Phase 0 runtime tests passed after the Python environment became available.
 - Phase 1 tests cover RSS normalization, timezone handling, duplicate content, source failure isolation, and retry behavior.
 - Phase 2 tests cover cleaning, enrichment, provenance, chunk limits, and invalid configuration.
-- No processing, LLM, vector database, scheduler, UI, or deployment behavior has been started.
+- Phase 3 tests cover deterministic embeddings, persistence, idempotent upserts, metadata filters, and reset behavior.
+- ChromaDB integration remains optional because it is not installed in the current environment; the adapter is ready for environments that install the `vector` extra.
+- No scheduler, UI, or deployment behavior has been started.
 
 ## Next phase
 
-Phase 3 - Knowledge Base will begin only after explicit confirmation. It will add embeddings, ChromaDB persistence, metadata filtering, idempotent upserts, and retrieval tests.
+Phase 4 - Orchestration will begin only after explicit confirmation. It will connect fetch, processing, embedding, and storage into manual and scheduled runs with retries and run summaries.
