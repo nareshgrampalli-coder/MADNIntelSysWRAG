@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 0 - Foundation: **complete**
+Phase 1 - News Ingestion: **complete**
 
 ## Completed
 
@@ -12,14 +12,18 @@ Phase 0 - Foundation: **complete**
 - Added environment-backed settings and logging configuration.
 - Added initial pytest coverage for provenance and grounded-response defaults.
 - Added local setup and repository documentation in `README.md`.
+- Added RSS parsing, bounded retries, normalized article fields, and source metadata.
+- Added Technology, Finance, and Politics fetcher boundaries.
+- Added URL/content-hash deduplication and fixture-based ingestion tests.
 
 ## Validation
 
 - `git diff --check` passes.
 - Static editor diagnostics report no errors in `src` or `tests`.
-- Runtime validation is pending: the environment does not currently have an installed Python interpreter (`py -m pytest` and `py -m compileall` could not run).
-- No ingestion, processing, LLM, vector database, scheduler, UI, or deployment behavior has been started.
+- Phase 0 runtime tests passed after the Python environment became available.
+- Phase 1 tests cover RSS normalization, timezone handling, duplicate content, source failure isolation, and retry behavior.
+- No processing, LLM, vector database, scheduler, UI, or deployment behavior has been started.
 
 ## Next phase
 
-Phase 1 - News Ingestion will begin only after explicit confirmation. It will add configurable RSS/API adapters for Technology, Finance, and Politics with normalization, retries, duplicate detection, and fixture-based tests.
+Phase 2 - Article Processing will begin only after explicit confirmation. It will add deterministic cleaning, summaries/tags/entities, chunking, and provenance-preserving tests.
