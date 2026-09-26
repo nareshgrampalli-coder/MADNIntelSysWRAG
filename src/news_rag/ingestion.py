@@ -1,6 +1,7 @@
 """RSS ingestion and domain-specific news fetchers."""
 
 from collections.abc import Callable, Iterable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -39,7 +40,9 @@ class RssSourceAdapter:
 
     def fetch(self, source: FeedSource) -> list[RawArticle]:
         payload = self._download(source.url)
-        return [self._hydrate_article(article) for article in parse_rss(payload, source)]
+        articles = parse_rss(payload, source)
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(articles)))) as executor:
+            return list(executor.map(self._hydrate_article, articles))
 
     def _hydrate_article(self, article: RawArticle) -> RawArticle:
         try:

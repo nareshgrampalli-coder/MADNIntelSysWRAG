@@ -194,16 +194,34 @@ def main() -> None:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    chat_disabled = store.count() == 0
+    chat_disabled = not st.session_state.get("ingestion_completed", False)
     if chat_disabled:
         st.markdown(
-            '<span title="Click Run ingestion to load news before asking a question.">'
-            "Chat is disabled until ingestion is complete."
-            "</span>",
+            """
+            <style>
+            [data-testid="stChatInput"] {
+                position: relative;
+            }
+            [data-testid="stChatInput"]:hover::after {
+                content: "Click Run ingestion to load news before asking a question.";
+                position: absolute;
+                left: 0;
+                bottom: calc(100% + 0.4rem);
+                z-index: 10;
+                padding: 0.45rem 0.65rem;
+                border-radius: 0.35rem;
+                background: #212529;
+                color: #fff;
+                font-size: 0.8rem;
+                pointer-events: none;
+                white-space: nowrap;
+            }
+            </style>
+            """,
             unsafe_allow_html=True,
         )
     question = st.chat_input(
-        "Run ingestion to enable questions" if chat_disabled else "Ask about recent news",
+        "Click Run Ingestion button to ask questions" if chat_disabled else "Ask about recent news",
         disabled=chat_disabled,
     )
     if question:

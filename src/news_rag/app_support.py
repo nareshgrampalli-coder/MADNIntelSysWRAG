@@ -33,8 +33,12 @@ def build_todays_briefing(
     for category in NewsCategory:
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
-        citations = [citation for citation in response.citations if citation.url not in seen_urls]
-        citations = tuple(citations[:6])
+        citations = sorted(
+            (citation for citation in response.citations if citation.url not in seen_urls),
+            key=lambda citation: citation.published_at,
+            reverse=True,
+        )
+        citations = tuple(citations[:3])
         if not citations:
             continue
         seen_urls.update(citation.url for citation in citations)
