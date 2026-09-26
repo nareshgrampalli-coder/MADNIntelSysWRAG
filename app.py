@@ -108,7 +108,7 @@ def main() -> None:
         st.subheader("Today's Briefing")
         briefing = build_todays_briefing(store)
         for category, response in briefing:
-            with st.expander(category_label(category), expanded=True):
+            with st.expander(category_label(category), expanded=False):
                 if not response.grounded:
                     st.info("No news has been indexed for today.")
                     continue
