@@ -156,18 +156,8 @@ def main() -> None:
                 st.session_state.rag_pipeline_completed = True
 
         with st.expander("Sample questions for today"):
-            sample_questions = build_sample_questions(store)
-            has_questions = False
-            for category in NewsCategory:
-                questions = sample_questions[category]
-                if not questions:
-                    continue
-                has_questions = True
-                st.markdown(f"**{category_label(category)}**")
-                for question in questions:
-                    st.markdown(f"- {question}")
-            if not has_questions:
-                st.info("Run ingestion to see questions from today's news.")
+            st.markdown("- Summarize todays news in 3 bullet points.")
+            st.markdown("- Summarize in 3 bullet points for each category.")
 
     @st.fragment
     def render_briefing() -> None:

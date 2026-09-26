@@ -142,6 +142,22 @@ def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
     assert response.answer.count("\n- ") == 2
 
 
+def test_query_engine_supports_todays_news_summary_wording(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("one", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+            make_chunk("two", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Summarize the todays news in 3 bullet points.")
+
+    assert response.grounded is True
+    assert response.answer.startswith("- ")
+    assert response.answer.count("\n- ") == 1
+
+
 def test_query_engine_returns_bullets_for_each_category(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(

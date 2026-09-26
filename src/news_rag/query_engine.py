@@ -164,6 +164,7 @@ def _term_overlap(query: str, document: str) -> float:
     stopwords = {
         "a", "about", "after", "and", "bullet", "bullets", "did", "for", "give", "in", "is",
         "latest", "me", "news", "of", "overall", "points", "since", "summarize", "summary",
+        "todays",
         "the", "today", "what", "why",
     }
     query_terms = {
