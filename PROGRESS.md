@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 7 - Evaluation and Documentation: **complete**
+Phase 8 - Vercel Deployment: **complete**
 
 ## Completed
 
@@ -33,6 +33,8 @@ Phase 7 - Evaluation and Documentation: **complete**
 - Added a 20-case evaluation dataset covering accuracy, citations, recency, filtering, and refusal behavior.
 - Added evaluation case loading and score summarization utilities.
 - Added the architecture diagram and demo runbook.
+- Added Vercel function configuration, API CORS headers, a health endpoint, and deployment documentation.
+- Added a deployment configuration test.
 
 ## Validation
 
@@ -50,7 +52,8 @@ Phase 7 - Evaluation and Documentation: **complete**
 - Streamlit browser validation is pending because the optional UI dependency is not installed in the current environment.
 - Phase 7 tests cover evaluation dataset loading, category counts, and score aggregation.
 - Deployment smoke testing remains pending until the Vercel/frontend and Python API deployment phase.
+- Local Vercel CLI smoke testing is pending because deployment credentials and a Vercel project are not configured in this environment.
 
 ## Next phase
 
-Phase 8 - Vercel Deployment will begin only after explicit confirmation. It will add production frontend configuration, API deployment guidance, environment variables, CORS, health checks, and deployment smoke tests.
+Implementation phases are complete. The next operational step is to connect a Vercel project and a separate Python host, configure secrets and approved source URLs, then run the deployment smoke test.

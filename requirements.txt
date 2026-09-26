@@ -1,0 +1,1 @@
+# Vercel API runtime dependencies. Keep long-running workers and Streamlit off Vercel.
