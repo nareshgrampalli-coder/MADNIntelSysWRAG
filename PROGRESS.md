@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 6 - User Interface: **complete**
+Phase 7 - Evaluation and Documentation: **complete**
 
 ## Completed
 
@@ -29,6 +29,9 @@ Phase 6 - User Interface: **complete**
 - Kept answer generation provider-neutral for a future hosted or local LLM adapter.
 - Added an optional Streamlit chat interface with category/date filters, citations, loading/error states, and manual ingestion controls.
 - Added UI helper tests and documented the optional `ui` dependency extra.
+- Added a 20-case evaluation dataset covering accuracy, citations, recency, filtering, and refusal behavior.
+- Added evaluation case loading and score summarization utilities.
+- Added the architecture diagram and demo runbook.
 
 ## Validation
 
@@ -43,8 +46,9 @@ Phase 6 - User Interface: **complete**
 - Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
 - Phase 6 tests cover filter composition and citation rendering.
 - Streamlit browser validation is pending because the optional UI dependency is not installed in the current environment.
-- No evaluation or deployment behavior has been started.
+- Phase 7 tests cover evaluation dataset loading, category counts, and score aggregation.
+- Deployment smoke testing remains pending until the Vercel/frontend and Python API deployment phase.
 
 ## Next phase
 
-Phase 7 - Evaluation and Documentation will begin only after explicit confirmation. It will add the evaluation question set, scoring report, architecture documentation, demo instructions, and deployment guidance.
+Phase 8 - Vercel Deployment will begin only after explicit confirmation. It will add production frontend configuration, API deployment guidance, environment variables, CORS, health checks, and deployment smoke tests.

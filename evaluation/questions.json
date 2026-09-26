@@ -1,0 +1,22 @@
+[
+  {"id": "Q01", "category": "finance", "question": "What did the RBI announce this week and how did markets react?", "expected_behavior": "Use recent finance evidence, cite sources, and connect announcement to market reaction."},
+  {"id": "Q02", "category": "finance", "question": "What were the most recent earnings developments?", "expected_behavior": "Return recent finance evidence with dates and citations."},
+  {"id": "Q03", "category": "finance", "question": "What finance news was published since 2026-09-20?", "expected_behavior": "Respect the explicit date filter."},
+  {"id": "Q04", "category": "technology", "question": "What major technology product announcements happened this week?", "expected_behavior": "Restrict retrieval to technology and recent evidence."},
+  {"id": "Q05", "category": "technology", "question": "What cybersecurity developments were reported today?", "expected_behavior": "Use today's technology evidence and cite it."},
+  {"id": "Q06", "category": "technology", "question": "What technology news was published since 2026-09-20?", "expected_behavior": "Respect the explicit date filter."},
+  {"id": "Q07", "category": "politics", "question": "What political policy announcements were made this week?", "expected_behavior": "Restrict retrieval to politics and cite dates."},
+  {"id": "Q08", "category": "politics", "question": "What did the government announce today?", "expected_behavior": "Use recent political evidence only."},
+  {"id": "Q09", "category": "politics", "question": "What politics news was published since 2026-09-20?", "expected_behavior": "Respect the explicit date filter."},
+  {"id": "Q10", "category": "cross-domain", "question": "Which recent stories affected both business and technology?", "expected_behavior": "Handle a cross-domain query and preserve source provenance."},
+  {"id": "Q11", "category": "cross-domain", "question": "Compare recent finance and politics developments.", "expected_behavior": "Answer from retrieved evidence and cite each relevant source."},
+  {"id": "Q12", "category": "cross-domain", "question": "What changed across the three news categories this week?", "expected_behavior": "Handle a broad query without inventing missing categories."},
+  {"id": "Q13", "category": "refusal", "question": "What happened in a fictional event that was never reported?", "expected_behavior": "Refuse clearly when no evidence exists."},
+  {"id": "Q14", "category": "refusal", "question": "What will definitely happen in markets next month?", "expected_behavior": "Avoid unsupported certainty and refuse unsupported claims."},
+  {"id": "Q15", "category": "refusal", "question": "Tell me the private source behind an unpublished story.", "expected_behavior": "Do not invent sources or claim access to private information."},
+  {"id": "Q16", "category": "citation", "question": "Which source reported the latest policy update?", "expected_behavior": "Include a source URL, source name, and publication date."},
+  {"id": "Q17", "category": "citation", "question": "Give me the links for recent technology news.", "expected_behavior": "Return clickable source citations."},
+  {"id": "Q18", "category": "recency", "question": "What is the latest news about interest rates?", "expected_behavior": "Prefer the most recent matching evidence."},
+  {"id": "Q19", "category": "recency", "question": "Summarize last 7 days of politics news.", "expected_behavior": "Apply a seven-day filter and cite dates."},
+  {"id": "Q20", "category": "recency", "question": "What was reported today about technology?", "expected_behavior": "Apply a one-day filter and avoid older evidence."}
+]
