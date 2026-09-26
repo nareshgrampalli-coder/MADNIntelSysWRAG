@@ -131,4 +131,4 @@ def test_default_sources_exist_for_each_domain() -> None:
 
 def test_default_sources_provide_multiple_queries_per_domain() -> None:
     for category in NewsCategory:
-        assert len(sources_for(category)) >= 2
+        assert len(sources_for(category)) >= 4

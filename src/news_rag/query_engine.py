@@ -57,7 +57,7 @@ class QueryEngine:
         store: VectorStore,
         interpreter: QueryInterpreter | None = None,
         generator: ExtractiveAnswerGenerator | None = None,
-        retrieval_limit: int = 8,
+        retrieval_limit: int = 12,
     ) -> None:
         self.store = store
         self.interpreter = interpreter or QueryInterpreter()

@@ -44,17 +44,15 @@ def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, 
 def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
     """Build one grounded response per domain from the last 24 hours."""
     clock = lambda: now or datetime.now(timezone.utc)
-    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock))
+    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock), retrieval_limit=6)
     briefing: list[tuple[NewsCategory, QueryResponse]] = []
     seen_urls: set[str] = set()
     for category in NewsCategory:
-        if len(seen_urls) >= 6:
-            break
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today")
         citations = tuple(
             citation for citation in response.citations if citation.url not in seen_urls
-        )[: 6 - len(seen_urls)]
+        )[:6]
         if not citations:
             continue
         seen_urls.update(citation.url for citation in citations)
