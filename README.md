@@ -50,3 +50,4 @@ The ingestion button uses multiple Google News RSS searches per domain in develo
 - `docs/PLAN.md`: phased implementation plan
 - `docs/PROGRESS.md`: phase completion record
 - `docs/COMPLIANCE_REPORT.md`: requirements compliance matrix
+- `docs/FAQ.md`: project functionality and operational FAQ
