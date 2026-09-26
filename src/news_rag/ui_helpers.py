@@ -16,6 +16,6 @@ def apply_filters(question: str, category: NewsCategory | None, start_date: date
 
 def citation_lines(response: QueryResponse) -> list[str]:
     return [
-        f"[{citation.title}]({citation.url}) - {citation.source}, {citation.published_at.date().isoformat()}"
+        f"[{citation.title}]({citation.url}) - {citation.source}, {citation.published_at.strftime('%d-%b-%Y')}"
         for citation in response.citations
     ]

@@ -26,7 +26,7 @@ def test_citation_lines_include_source_links_and_dates() -> None:
     )
 
     assert citation_lines(response) == [
-        "[Policy update](https://example.com/story) - Example News, 2026-09-26"
+        "[Policy update](https://example.com/story) - Example News, 26-Sep-2026"
     ]
 
 
