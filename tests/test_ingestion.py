@@ -194,6 +194,38 @@ def test_adapter_removes_publisher_session_boilerplate() -> None:
     assert articles[0].content == "Article body."
 
 
+def test_adapter_removes_ad_and_promotion_containers() -> None:
+    source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
+    html = b"""
+    <article>
+      <p>Article body about the market outlook.</p>
+      <div class='advertisement'>Sponsored broker promotion.</div>
+      <div id='recommended-stories'>Read more related stories.</div>
+      <p>Second relevant paragraph.</p>
+    </article>
+    """
+
+    class Response:
+        def __init__(self, payload: bytes):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return self.payload
+
+    def opener(request, timeout):
+        return Response(RSS if request.full_url.endswith("/rss") else html)
+
+    articles = RssSourceAdapter(opener=opener, retries=0).fetch(source)
+
+    assert articles[0].content == "Article body about the market outlook. Second relevant paragraph."
+
+
 def test_default_sources_exist_for_each_domain(monkeypatch) -> None:
     monkeypatch.delenv("NEWS_RAG_FINANCE_RSS_URLS", raising=False)
     monkeypatch.delenv("NEWS_RAG_FINANCE_APPROVED_RSS_URLS", raising=False)
@@ -221,7 +253,7 @@ def test_default_sources_provide_multiple_queries_per_domain() -> None:
     for category in NewsCategory:
         assert sources_for(category)
 
-    assert len(sources_for(NewsCategory.FINANCE)) == 5
+    assert len(sources_for(NewsCategory.FINANCE)) == 2
 
 
 def test_stocks_sources_use_only_livemint_markets() -> None:
@@ -237,8 +269,9 @@ def test_default_sources_use_requested_indian_publishers() -> None:
 
     assert urls == {
         "https://finance.yahoo.com/rss/",
-        "https://indianexpress.com/feed/",
-        "https://feeds.feedburner.com/ndtvnews-top-stories",
-        "https://www.thehindu.com/feeder/default.rss",
+        "https://www.livemint.com/rss/news",
+        "https://www.livemint.com/rss/money",
+        "https://www.livemint.com/rss/politics",
         "https://www.livemint.com/rss/markets",
+        "https://www.livemint.com/rss/sports",
     }

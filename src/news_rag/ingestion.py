@@ -122,19 +122,28 @@ class _ArticleTextExtractor(HTMLParser):
         super().__init__()
         self.parts: list[str] = []
         self._ignored_depth = 0
+        self._ignored_tags: list[str] = []
         self._content_depth = 0
         self._has_content_container = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag in {"script", "style", "nav", "footer", "header", "aside", "form"}:
+        attributes = {name.casefold(): (value or "").casefold() for name, value in attrs}
+        marker = f"{attributes.get('id', '')} {attributes.get('class', '')}"
+        is_noise = bool(re.search(
+            r"\b(?:ad|ads|advert|advertisement|banner|promo|promotion|recommended|related|social|subscribe|subscription|newsletter|outbrain|taboola)\b",
+            marker,
+        ))
+        if tag in {"script", "style", "nav", "footer", "header", "aside", "form"} or is_noise:
             self._ignored_depth += 1
+            self._ignored_tags.append(tag)
         if tag in {"article", "main"}:
             self._content_depth += 1
             self._has_content_container = True
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in {"script", "style", "nav", "footer", "header", "aside", "form"} and self._ignored_depth:
+        if tag in self._ignored_tags:
             self._ignored_depth -= 1
+            self._ignored_tags.remove(tag)
         if tag in {"article", "main"} and self._content_depth:
             self._content_depth -= 1
 
@@ -155,6 +164,12 @@ def _extract_article_text(payload: bytes) -> str:
         "You do not have any Active Subscription",
     ):
         text = re.sub(re.escape(phrase), " ", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"(?:Advertisement|Sponsored|Subscribe to our newsletter|Follow us on social media):?[^.]*\.?",
+        " ",
+        text,
+        flags=re.IGNORECASE,
+    )
     return " ".join(text.split())
 
 
@@ -206,6 +221,11 @@ class PoliticsFetcher(DomainFetcher):
 
 
 class StocksFetcher(DomainFetcher):
+    def __init__(self, sources: Iterable[FeedSource] = (), adapter: RssSourceAdapter | None = None) -> None:
+        super().__init__(sources, adapter)
+
+
+class SportsFetcher(DomainFetcher):
     def __init__(self, sources: Iterable[FeedSource] = (), adapter: RssSourceAdapter | None = None) -> None:
         super().__init__(sources, adapter)
 

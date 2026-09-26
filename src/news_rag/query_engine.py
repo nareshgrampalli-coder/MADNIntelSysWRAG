@@ -127,6 +127,10 @@ class QueryEngine:
             focused_chunks = _focus_article_chunks(question, chunks)
             if focused_chunks:
                 chunks = focused_chunks
+        else:
+            focused_chunks = _focus_topic_chunks(question, chunks)
+            if focused_chunks:
+                chunks = focused_chunks
         chunks = chunks[: self.retrieval_limit]
         if not chunks:
             return QueryResponse(answer="I don't have news on that.")
@@ -203,6 +207,30 @@ def _focus_article_chunks(question: str, chunks: list[ArticleChunk]) -> list[Art
         if len(query_terms & set(re.findall(r"[a-z0-9]+", chunk.metadata.get("title", "").casefold()))) >= 2
     ]
     return title_matches or chunks
+
+
+def _focus_topic_chunks(question: str, chunks: list[ArticleChunk]) -> list[ArticleChunk]:
+    """Prefer evidence containing the user's exact multi-word topic."""
+    terms = _summary_terms(question)
+    if len(terms) < 2:
+        return chunks
+    topic_phrases = [
+        " ".join(pair)
+        for pair in zip(
+            re.findall(r"[a-z0-9]+", question.casefold()),
+            re.findall(r"[a-z0-9]+", question.casefold())[1:],
+        )
+        if all(term not in {"about", "more", "tell", "what", "latest", "news"} for term in pair)
+    ]
+    matching = [
+        chunk
+        for chunk in chunks
+        if any(
+            phrase in f"{chunk.metadata.get('title', '')} {chunk.text}".casefold()
+            for phrase in topic_phrases
+        )
+    ]
+    return matching or chunks
 
 
 def _rerank(

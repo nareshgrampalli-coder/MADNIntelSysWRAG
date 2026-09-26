@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import monotonic, sleep
 
 from news_rag.config import Settings
-from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
+from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, SportsFetcher, StocksFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine
@@ -40,6 +40,7 @@ def build_pipeline(store: VectorStore) -> NewsPipeline:
             FinanceFetcher(sources_for(NewsCategory.FINANCE)),
             PoliticsFetcher(sources_for(NewsCategory.POLITICS)),
             StocksFetcher(sources_for(NewsCategory.STOCKS)),
+            SportsFetcher(sources_for(NewsCategory.SPORTS)),
         ),
         store=store,
     )
@@ -246,10 +247,24 @@ def main() -> None:
             (candidate for candidate in NewsCategory if category_label(candidate) == category_value),
             None,
         )
-        recent_context = " ".join(
-            message["content"] for message in st.session_state.messages[-6:] if message["role"] == "user"
+        prior_questions = [
+            message["content"].strip().casefold()
+            for message in st.session_state.messages[-6:]
+            if message["role"] == "user"
+        ]
+        normalized_question = question.strip().casefold()
+        has_repeated_question = normalized_question in prior_questions
+        previous_question = next(
+            (
+                message["content"].strip()
+                for message in reversed(st.session_state.messages)
+                if message["role"] == "user"
+            ),
+            "",
         )
-        contextual_question = f"{recent_context} {question}".strip()
+        contextual_question = (
+            question if has_repeated_question or not previous_question else f"{previous_question} {question}"
+        )
         effective_question = apply_filters(contextual_question, category, start_date)
         st.session_state.messages.append({"role": "user", "content": question})
         with st.chat_message("user"):

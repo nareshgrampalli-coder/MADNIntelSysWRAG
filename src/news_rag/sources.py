@@ -11,15 +11,17 @@ RELEVANCE_TERMS: dict[NewsCategory, tuple[str, ...]] = {
     NewsCategory.FINANCE: ("market", "rbi", "bank", "finance", "earnings", "stocks", "economy"),
     NewsCategory.POLITICS: ("government", "minister", "election", "policy", "parliament", "politics"),
     NewsCategory.STOCKS: ("nse", "bse", "sensex", "nifty", "stocks", "shares"),
+    NewsCategory.SPORTS: ("sport", "cricket", "football", "tennis", "match", "league", "player"),
 }
 
 
-PUBLISHER_FEEDS: tuple[tuple[str, str], ...] = (
-    ("Indian Express", "https://indianexpress.com/feed/"),
-    ("NDTV", "https://feeds.feedburner.com/ndtvnews-top-stories"),
-    ("The Hindu", "https://www.thehindu.com/feeder/default.rss"),
-    ("LiveMint", "https://www.livemint.com/rss/markets"),
-)
+LIVEMINT_FEEDS: dict[NewsCategory, tuple[str, str]] = {
+    NewsCategory.TECHNOLOGY: ("LiveMint", "https://www.livemint.com/rss/news"),
+    NewsCategory.FINANCE: ("LiveMint", "https://www.livemint.com/rss/money"),
+    NewsCategory.POLITICS: ("LiveMint", "https://www.livemint.com/rss/politics"),
+    NewsCategory.STOCKS: ("LiveMint", "https://www.livemint.com/rss/markets"),
+    NewsCategory.SPORTS: ("LiveMint", "https://www.livemint.com/rss/sports"),
+}
 YAHOO_FINANCE_FEED = ("Yahoo Finance", "https://finance.yahoo.com/rss/")
 
 
@@ -36,11 +38,9 @@ DEFAULT_SOURCES: tuple[FeedSource, ...] = tuple(
     _publisher_source(category, publisher, url)
     for category in NewsCategory
     for publisher, url in (
-        (YAHOO_FINANCE_FEED,) + PUBLISHER_FEEDS
+        (YAHOO_FINANCE_FEED, LIVEMINT_FEEDS[category])
         if category is NewsCategory.FINANCE
-        else (PUBLISHER_FEEDS[3],)
-        if category is NewsCategory.STOCKS
-        else PUBLISHER_FEEDS
+        else (LIVEMINT_FEEDS[category],)
     )
 )
 

@@ -216,6 +216,23 @@ def test_query_engine_focuses_single_article_questions(tmp_path) -> None:
     assert "crude" not in response.answer.casefold()
 
 
+def test_query_engine_focuses_exact_multi_word_topics(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("asian-games", NewsCategory.SPORTS, 0, "Asian Games athletes prepare for the opening events"),
+            make_chunk("entertainment", NewsCategory.TECHNOLOGY, 0, "The story continues below this ad with a new film release"),
+            make_chunk("election", NewsCategory.POLITICS, 0, "Electoral Registration Officer hearings will be held online"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Tell me more about Asian Games")
+
+    assert [citation.url for citation in response.citations] == ["https://example.com/asian-games"]
+    assert "electoral" not in response.answer.casefold()
+    assert "film" not in response.answer.casefold()
+
+
 def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(

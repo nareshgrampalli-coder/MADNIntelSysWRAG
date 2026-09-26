@@ -10,6 +10,7 @@ class NewsCategory(StrEnum):
     FINANCE = "finance"
     POLITICS = "politics"
     STOCKS = "stocks"
+    SPORTS = "sports"
 
 
 @dataclass(frozen=True)
