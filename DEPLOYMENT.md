@@ -11,6 +11,7 @@ The repository includes:
 - `vercel.json`: API function limits and CORS headers
 - `api/health.py`: `GET /api/health` health endpoint
 - `requirements.txt`: Vercel runtime dependency entry point
+- `pyproject.toml`: explicit `api.health:handler` Vercel entrypoint so `app.py` is not selected
 
 Deploy from the repository root:
 

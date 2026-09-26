@@ -25,5 +25,8 @@ ui = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 
+[tool.vercel]
+entrypoint = "api.health:handler"
+
 [tool.setuptools.packages.find]
 where = ["src"]
