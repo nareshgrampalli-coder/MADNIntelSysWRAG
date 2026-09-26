@@ -37,7 +37,15 @@ def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, 
             title = chunk.metadata.get("title", "").strip()
             if title and title not in titles:
                 titles.append(title)
-        questions[category] = tuple(f"What is this story about: {title}?" for title in titles[:2])
+        if titles:
+            title = titles[0]
+            questions[category] = (
+                f"What happened in {title}?",
+                f"Why is {title} important?",
+                f"What may happen next after {title}?",
+            )
+        else:
+            questions[category] = ()
     return questions
 
 

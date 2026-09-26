@@ -72,5 +72,7 @@ def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:
     questions = build_sample_questions(store)
 
     assert questions[NewsCategory.STOCKS] == (
-        "What is this story about: Nifty gains after market rally?",
+        "What happened in Nifty gains after market rally?",
+        "Why is Nifty gains after market rally important?",
+        "What may happen next after Nifty gains after market rally?",
     )
