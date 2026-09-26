@@ -1,12 +1,12 @@
 """Streamlit user interface for the News RAG application."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
-from news_rag.query_engine import QueryEngine
+from news_rag.query_engine import QueryEngine, QueryResponse, QueryInterpreter
 from news_rag.sources import sources_for
 from news_rag.vector_store import JsonVectorStore
 
@@ -42,6 +42,18 @@ def citation_lines(response: QueryResponse) -> list[str]:
     ]
 
 
+def build_todays_briefing(store: JsonVectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
+    """Build one grounded response per domain from the last 24 hours."""
+    clock = lambda: now or datetime.now(timezone.utc)
+    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock))
+    briefing: list[tuple[NewsCategory, QueryResponse]] = []
+    for category in NewsCategory:
+        response = engine.answer(f"latest {category.value} news today")
+        if response.grounded:
+            briefing.append((category, response))
+    return briefing
+
+
 def main() -> None:
     try:
         import streamlit as st
@@ -62,6 +74,7 @@ def main() -> None:
         category_value = st.selectbox("Category", ["All", *[category.value.title() for category in NewsCategory]])
         start_date = st.date_input("Published after", value=None)
         st.divider()
+        show_briefing = st.checkbox("Today's Briefing")
         st.metric("Indexed chunks", store.count())
         if st.button("Run ingestion", type="secondary"):
             with st.spinner("Collecting and indexing sources..."):
@@ -70,6 +83,17 @@ def main() -> None:
                 st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
             else:
                 st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
+
+    if show_briefing:
+        st.subheader("Today's Briefing")
+        briefing = build_todays_briefing(store)
+        if not briefing:
+            st.info("No news has been indexed for today.")
+        for category, response in briefing:
+            with st.expander(category.value.title(), expanded=True):
+                st.markdown(response.answer)
+                for line in citation_lines(response):
+                    st.markdown(line)
 
     if "messages" not in st.session_state:
         st.session_state.messages = []

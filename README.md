@@ -30,6 +30,7 @@ The ingestion button uses one Google News RSS search per domain in development. 
 ## Repository structure
 
 - `app.py`: Streamlit chat interface and manual ingestion controls
+- `app.py`: Streamlit chat, filters, manual ingestion, and optional Today's Briefing
 - `src/news_rag/models.py`: shared domain contracts
 - `src/news_rag/ingestion.py`: RSS parsing and domain fetchers
 - `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking

@@ -29,6 +29,7 @@ Phase 7 - Evaluation and Documentation: **complete**
 - Kept answer generation provider-neutral for a future hosted or local LLM adapter.
 - Added an optional Streamlit chat interface with category/date filters, citations, loading/error states, and manual ingestion controls.
 - Added UI helper tests and documented the optional `ui` dependency extra.
+- Added an optional Today's Briefing panel with one grounded, cited section per domain for the last 24 hours.
 - Added a 20-case evaluation dataset covering accuracy, citations, recency, filtering, and refusal behavior.
 - Added evaluation case loading and score summarization utilities.
 - Added the architecture diagram and demo runbook.
@@ -45,6 +46,7 @@ Phase 7 - Evaluation and Documentation: **complete**
 - Phase 4 tests cover end-to-end pipeline execution and partial fetcher failure handling.
 - Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
 - Phase 6 tests cover filter composition and citation rendering.
+- Today's Briefing tests cover date-aware domain summaries and citation-backed output.
 - Streamlit browser validation is pending because the optional UI dependency is not installed in the current environment.
 - Phase 7 tests cover evaluation dataset loading, category counts, and score aggregation.
 - Deployment smoke testing remains pending until the Vercel/frontend and Python API deployment phase.
