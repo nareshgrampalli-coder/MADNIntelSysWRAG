@@ -13,7 +13,7 @@ Phase 8 - Vercel Deployment: **complete**
 - Added initial pytest coverage for provenance and grounded-response defaults.
 - Added local setup and repository documentation in `README.md`.
 - Added RSS parsing, bounded retries, normalized article fields, and source metadata.
-- Added Technology, Finance, and Politics fetcher boundaries.
+- Added Technology, Finance, Politics, and India Stocks Market fetcher boundaries.
 - Added URL/content-hash deduplication and fixture-based ingestion tests.
 - Added deterministic HTML/boilerplate cleaning.
 - Added summary, category tags, and lightweight entity extraction.

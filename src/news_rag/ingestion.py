@@ -124,6 +124,11 @@ class PoliticsFetcher(DomainFetcher):
         super().__init__(sources, adapter)
 
 
+class StocksFetcher(DomainFetcher):
+    def __init__(self, sources: Iterable[FeedSource] = (), adapter: RssSourceAdapter | None = None) -> None:
+        super().__init__(sources, adapter)
+
+
 def _text(element: ET.Element | None) -> str:
     return " ".join("".join(element.itertext()).split()) if element is not None else ""
 

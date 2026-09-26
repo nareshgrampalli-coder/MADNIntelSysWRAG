@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart TD
-    S[Scheduler or manual trigger] --> F[Technology / Finance / Politics fetchers]
+    S[Scheduler or manual trigger] --> F[Technology / Finance / Politics / India Stocks fetchers]
     F --> P[Cleaning and enrichment]
     P --> C[300-500 word chunks with provenance]
     C --> E[Embedding provider]

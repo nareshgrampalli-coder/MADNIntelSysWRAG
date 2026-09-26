@@ -11,6 +11,7 @@ RELEVANCE_TERMS: dict[NewsCategory, tuple[str, ...]] = {
     NewsCategory.TECHNOLOGY: ("technology", "software", "ai", "cybersecurity", "startup", "digital"),
     NewsCategory.FINANCE: ("market", "rbi", "bank", "finance", "earnings", "stocks", "economy"),
     NewsCategory.POLITICS: ("government", "minister", "election", "policy", "parliament", "politics"),
+    NewsCategory.STOCKS: ("india", "nse", "bse", "sensex", "nifty", "stocks", "shares"),
 }
 
 
@@ -27,6 +28,7 @@ DEFAULT_SOURCES: tuple[FeedSource, ...] = (
     _google_news_source(NewsCategory.TECHNOLOGY, "technology India"),
     _google_news_source(NewsCategory.FINANCE, "finance India markets"),
     _google_news_source(NewsCategory.POLITICS, "politics India"),
+    _google_news_source(NewsCategory.STOCKS, "India stock market NSE BSE Nifty Sensex"),
 )
 
 

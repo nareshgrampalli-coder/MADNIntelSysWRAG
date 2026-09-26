@@ -3,13 +3,13 @@
 from datetime import date, datetime, timezone
 
 from news_rag.config import Settings
-from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, TechnologyFetcher
+from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine, QueryInterpreter
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
-from news_rag.ui_helpers import apply_filters, citation_lines
+from news_rag.ui_helpers import apply_filters, category_label, citation_lines
 
 
 def build_store(settings: Settings) -> VectorStore:
@@ -22,6 +22,7 @@ def build_pipeline(store: VectorStore) -> NewsPipeline:
             TechnologyFetcher(sources_for(NewsCategory.TECHNOLOGY)),
             FinanceFetcher(sources_for(NewsCategory.FINANCE)),
             PoliticsFetcher(sources_for(NewsCategory.POLITICS)),
+            StocksFetcher(sources_for(NewsCategory.STOCKS)),
         ),
         store=store,
     )
@@ -56,7 +57,7 @@ def main() -> None:
 
     with st.sidebar:
         st.header("Filters")
-        category_value = st.selectbox("Category", ["All", *[category.value.title() for category in NewsCategory]])
+        category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
         start_date = st.date_input("Published after", value=None)
         st.divider()
         show_briefing = st.checkbox("Today's Briefing")
@@ -75,7 +76,7 @@ def main() -> None:
         if not briefing:
             st.info("No news has been indexed for today.")
         for category, response in briefing:
-            with st.expander(category.value.title(), expanded=True):
+            with st.expander(category_label(category), expanded=True):
                 st.markdown(response.answer)
                 for line in citation_lines(response):
                     st.markdown(line)
@@ -88,7 +89,10 @@ def main() -> None:
 
     question = st.chat_input("Ask about recent technology, finance, or politics news")
     if question:
-        category = None if category_value == "All" else NewsCategory(category_value.casefold())
+        category = next(
+            (candidate for candidate in NewsCategory if category_label(candidate) == category_value),
+            None,
+        )
         effective_question = apply_filters(question, category, start_date)
         st.session_state.messages.append({"role": "user", "content": question})
         with st.chat_message("user"):

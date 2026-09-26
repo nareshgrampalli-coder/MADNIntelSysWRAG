@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a news analyst that collects Technology, Finance, and Politics news, processes it into a dated knowledge base, and answers questions with grounded citations.
+Build a news analyst that collects Technology, Finance, Politics, and India-only Stocks Market news, processes it into a dated knowledge base, and answers questions with grounded citations.
 
 ## Phases
 
@@ -15,7 +15,7 @@ Build a news analyst that collects Technology, Finance, and Politics news, proce
 ### Phase 1: News Ingestion
 
 - Implement common RSS/API source adapters.
-- Add separate Technology, Finance, and Politics fetchers.
+- Add separate Technology, Finance, Politics, and India Stocks Market fetchers.
 - Normalize titles, article text, URLs, sources, and publication dates.
 - Add timeouts, retries, duplicate detection, and failure logging.
 

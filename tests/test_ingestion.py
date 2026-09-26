@@ -4,6 +4,7 @@ from news_rag.ingestion import (
     FeedSource,
     FinanceFetcher,
     RssSourceAdapter,
+    StocksFetcher,
     deduplicate_articles,
     parse_rss,
 )
@@ -79,6 +80,18 @@ def test_domain_fetcher_applies_source_relevance_terms() -> None:
     )
 
     assert len(fetcher.fetch()) == 1
+
+
+def test_stocks_fetcher_uses_stocks_category() -> None:
+    source = FeedSource("India Stocks", "https://example.com/rss", NewsCategory.STOCKS, ("nifty",))
+
+    class FakeAdapter:
+        def fetch(self, feed_source: FeedSource):
+            return parse_rss(RSS.replace(b"Markets react", b"Nifty reacts"), feed_source)
+
+    articles = StocksFetcher((source,), adapter=FakeAdapter()).fetch()
+
+    assert articles[0].category is NewsCategory.STOCKS
 
 
 def test_adapter_retries_then_returns_payload() -> None:

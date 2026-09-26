@@ -9,6 +9,7 @@ class NewsCategory(StrEnum):
     TECHNOLOGY = "technology"
     FINANCE = "finance"
     POLITICS = "politics"
+    STOCKS = "stocks"
 
 
 @dataclass(frozen=True)

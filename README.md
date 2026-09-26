@@ -1,6 +1,6 @@
 # News RAG
 
-A date-aware news analyst for Technology, Finance, and Politics. The system will collect approved news sources, process and index articles, and answer questions with grounded citations.
+A date-aware news analyst for Technology, Finance, Politics, and the India-only Stocks category. The system will collect approved news sources, process and index articles, and answer questions with grounded citations.
 
 ## Status
 
@@ -27,7 +27,7 @@ streamlit run app.py
 
 Run scheduled ingestion with `py worker.py`. Set `NEWS_RAG_INTERVAL_SECONDS=3600` for hourly runs; the default is daily. Set `NEWS_RAG_VECTOR_BACKEND=chroma` when the optional ChromaDB dependency and durable storage are available.
 
-The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, and `NEWS_RAG_POLITICS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use `NEWS_RAG_TECHNOLOGY_APPROVED_RSS_URLS`, `NEWS_RAG_FINANCE_APPROVED_RSS_URLS`, and `NEWS_RAG_POLITICS_APPROVED_RSS_URLS` for operator-approved official feeds.
+The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, `NEWS_RAG_POLITICS_RSS_URLS`, and `NEWS_RAG_STOCKS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use the matching `*_APPROVED_RSS_URLS` variables for operator-approved official feeds.
 
 ## Repository structure
 

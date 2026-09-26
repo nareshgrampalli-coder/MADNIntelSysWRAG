@@ -14,7 +14,7 @@
 
 | Requirement | Status | Evidence / Gap |
 |---|---|---|
-| Technology, Finance, and Politics fetcher agents | Complete | `src/news_rag/ingestion.py` defines separate domain fetchers; `src/news_rag/sources.py` provides default feeds and environment overrides. |
+| Technology, Finance, Politics, and India Stocks Market fetcher agents | Complete | `src/news_rag/ingestion.py` defines separate domain fetchers; `src/news_rag/sources.py` provides India-focused default stock feeds and environment overrides. |
 | Collect headline, body, URL, publication date, and source | Complete | RSS normalization produces typed `RawArticle` records with these fields. |
 | Source relevance rules and approved official sources | Complete for MVP | Each domain has relevance terms, irrelevant feed items are filtered, and approved per-domain RSS URLs can be supplied through `*_APPROVED_RSS_URLS`. Official-source coverage still depends on the URLs configured by the operator. |
 | Scheduled orchestration | Complete for MVP | `worker.py` runs the interval scheduler as a standalone process, supports daily/hourly intervals through `NEWS_RAG_INTERVAL_SECONDS`, and handles graceful shutdown. Durable hosting remains an operational deployment task. |

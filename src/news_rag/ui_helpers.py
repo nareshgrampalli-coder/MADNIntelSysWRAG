@@ -5,6 +5,10 @@ from datetime import date
 from .models import NewsCategory, QueryResponse
 
 
+def category_label(category: NewsCategory) -> str:
+    return "Stocks Market" if category is NewsCategory.STOCKS else category.value.title()
+
+
 def apply_filters(question: str, category: NewsCategory | None, start_date: date | None) -> str:
     additions: list[str] = []
     if category:
