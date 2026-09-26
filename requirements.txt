@@ -1,1 +1,3 @@
-# Vercel API runtime dependencies. Keep long-running workers and Streamlit off Vercel.
+# Streamlit Community Cloud dependencies.
+-e .
+streamlit>=1.40

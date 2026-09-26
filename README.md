@@ -4,7 +4,7 @@ A date-aware news analyst for Technology, Finance, and Politics. The system will
 
 ## Status
 
-Phase 0 (foundation) is complete. Ingestion, processing, retrieval, orchestration, UI, evaluation, and deployment are planned but not implemented yet. See [PLAN.md](PLAN.md) and [PROGRESS.md](PROGRESS.md).
+The MVP implementation is complete. See [PLAN.md](PLAN.md), [PROGRESS.md](PROGRESS.md), and [DEPLOYMENT.md](DEPLOYMENT.md) for the phase record and deployment instructions.
 
 ## Local setup
 

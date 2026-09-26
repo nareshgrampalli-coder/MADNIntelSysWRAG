@@ -2,7 +2,17 @@
 
 ## Current deployment shape
 
-The Streamlit application is a Python process and should run on a Python-compatible host. Vercel is configured for lightweight API endpoints and is not used to run Streamlit, ingestion workers, vector storage, or long-running scheduled jobs.
+The Streamlit application runs on Streamlit Community Cloud, which has a free tier and reads `app.py` as the application entrypoint. Vercel is configured separately for lightweight API endpoints and is not used to run Streamlit, ingestion workers, vector storage, or long-running scheduled jobs.
+
+## Free Streamlit Community Cloud deployment
+
+1. Push this repository to GitHub.
+2. Open [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
+3. Create an app for this repository, branch `main`, and file `app.py`.
+4. Add the RSS URL variables from `.env.example` under **Advanced settings > Secrets** when custom sources are needed.
+5. Deploy and open the generated `streamlit.app` URL.
+
+The `requirements.txt` file installs the package and Streamlit automatically. The local JSON vector store is suitable for a demo; Cloud restarts can discard local data, so production use requires persistent external storage.
 
 ## Vercel API scaffold
 
