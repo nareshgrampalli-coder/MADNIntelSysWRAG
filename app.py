@@ -37,9 +37,7 @@ def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, 
             title = chunk.metadata.get("title", "").strip()
             if title and title not in titles:
                 titles.append(title)
-        questions[category] = tuple(
-            f"What is the latest update on {title}?" for title in titles[:2]
-        )
+        questions[category] = tuple(f"What is this story about: {title}?" for title in titles[:2])
     return questions
 
 
@@ -70,20 +68,6 @@ def main() -> None:
     st.title("News RAG Analyst")
     st.caption("Answers are generated only from indexed, dated source material.")
 
-    with st.expander("Sample questions for today"):
-        sample_questions = build_sample_questions(store)
-        has_questions = False
-        for category in NewsCategory:
-            questions = sample_questions[category]
-            if not questions:
-                continue
-            has_questions = True
-            st.markdown(f"**{category_label(category)}**")
-            for question in questions:
-                st.markdown(f"- {question}")
-        if not has_questions:
-            st.info("Run ingestion to generate questions from today's indexed news.")
-
     with st.sidebar:
         st.header("Filters")
         category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
@@ -98,6 +82,20 @@ def main() -> None:
                 st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
             else:
                 st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
+
+        with st.expander("Sample questions for today"):
+            sample_questions = build_sample_questions(store)
+            has_questions = False
+            for category in NewsCategory:
+                questions = sample_questions[category]
+                if not questions:
+                    continue
+                has_questions = True
+                st.markdown(f"**{category_label(category)}**")
+                for question in questions:
+                    st.markdown(f"- {question}")
+            if not has_questions:
+                st.info("Run ingestion to see questions from today's news.")
 
     if show_briefing:
         st.subheader("Today's Briefing")
