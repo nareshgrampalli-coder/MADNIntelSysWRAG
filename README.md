@@ -27,7 +27,7 @@ streamlit run app.py
 
 Run scheduled ingestion with `py worker.py`. Set `NEWS_RAG_INTERVAL_SECONDS=3600` for hourly runs; the default is daily. Set `NEWS_RAG_VECTOR_BACKEND=chroma` when the optional ChromaDB dependency and durable storage are available.
 
-The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, `NEWS_RAG_POLITICS_RSS_URLS`, and `NEWS_RAG_STOCKS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use the matching `*_APPROVED_RSS_URLS` variables for operator-approved official feeds.
+The ingestion button uses multiple Google News RSS searches per domain in development to improve daily coverage. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, `NEWS_RAG_POLITICS_RSS_URLS`, and `NEWS_RAG_STOCKS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use the matching `*_APPROVED_RSS_URLS` variables for operator-approved official feeds.
 
 ## Repository structure
 

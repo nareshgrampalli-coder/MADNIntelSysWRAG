@@ -26,9 +26,13 @@ def _google_news_source(category: NewsCategory, query: str) -> FeedSource:
 
 DEFAULT_SOURCES: tuple[FeedSource, ...] = (
     _google_news_source(NewsCategory.TECHNOLOGY, "technology India"),
+    _google_news_source(NewsCategory.TECHNOLOGY, "AI cybersecurity startups India"),
     _google_news_source(NewsCategory.FINANCE, "finance India markets"),
+    _google_news_source(NewsCategory.FINANCE, "RBI economy earnings India"),
     _google_news_source(NewsCategory.POLITICS, "politics India"),
+    _google_news_source(NewsCategory.POLITICS, "India government parliament policy"),
     _google_news_source(NewsCategory.STOCKS, "India stock market NSE BSE Nifty Sensex"),
+    _google_news_source(NewsCategory.STOCKS, "Indian shares market closing today"),
 )
 
 
