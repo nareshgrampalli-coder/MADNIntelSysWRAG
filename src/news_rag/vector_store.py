@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import hashlib
 import math
+import re
 
 from .models import ArticleChunk, NewsCategory
 
@@ -64,7 +65,9 @@ class JsonVectorStore:
             published_at = datetime.fromisoformat(metadata["published_at"])
             if published_after and published_at < published_after:
                 continue
-            score = _cosine_similarity(query_embedding, record["embedding"])
+            semantic_score = _cosine_similarity(query_embedding, record["embedding"])
+            lexical_score = _lexical_overlap(text, record["text"])
+            score = 0.7 * semantic_score + 0.3 * lexical_score
             candidates.append((score, _record_to_chunk(record)))
         candidates.sort(key=lambda item: item[0], reverse=True)
         return [chunk for _, chunk in candidates[: max(0, limit)]]
@@ -137,3 +140,11 @@ def _record_to_chunk(record: dict[str, object]) -> ArticleChunk:
 
 def _cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
     return sum(a * b for a, b in zip(left, right, strict=True))
+
+
+def _lexical_overlap(query: str, document: str) -> float:
+    query_terms = set(re.findall(r"[a-z0-9]+", query.casefold()))
+    document_terms = set(re.findall(r"[a-z0-9]+", document.casefold()))
+    if not query_terms:
+        return 0.0
+    return len(query_terms & document_terms) / len(query_terms)
