@@ -149,7 +149,7 @@ def main() -> None:
                 """,
                 unsafe_allow_html=True,
             )
-        if st.button("Run RAG pipeline", type="primary" if rag_done else "secondary"):
+        if st.button("Run RAG pipeline", type="primary" if rag_done else "secondary", disabled=True):
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
                 if report.succeeded and report.chunks_stored:
