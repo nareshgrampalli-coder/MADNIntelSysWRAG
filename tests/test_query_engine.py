@@ -61,3 +61,14 @@ def test_query_engine_supports_explicit_dates(tmp_path) -> None:
     response = QueryEngine(store, interpreter=interpreter).answer("Politics news since 2026-09-25")
 
     assert response.grounded is True
+
+
+def test_query_engine_reranks_relevant_evidence_before_recency(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    recent_broad = make_chunk("recent", NewsCategory.FINANCE, 0, "Markets had a quiet trading session")
+    older_relevant = make_chunk("relevant", NewsCategory.FINANCE, 2, "RBI announced a policy rate change")
+    store.upsert([recent_broad, older_relevant])
+
+    response = QueryEngine(store).answer("What did the RBI announce?")
+
+    assert response.citations[0].url.endswith("/relevant")

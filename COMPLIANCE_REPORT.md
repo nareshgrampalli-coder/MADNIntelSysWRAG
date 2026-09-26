@@ -25,7 +25,7 @@
 | Embeddings and vector database | Partial | Deterministic hash embeddings and persistent JSON storage are available by default; ChromaDB is optional and not runtime-tested in this environment. |
 | Rich metadata filtering | Complete | Category, publication date, source, URL, entities, and ingestion metadata are stored or preserved for retrieval. |
 | Query interpretation | Complete for MVP | Category, relative date ranges, and explicit dates are supported. |
-| Hybrid search and reranking | Partial | JSON retrieval now combines semantic similarity with lexical term overlap and the query engine applies recency ordering; a dedicated production reranker is not implemented. |
+| Hybrid search and reranking | Complete for MVP | JSON retrieval combines semantic similarity with lexical term overlap, then the query engine reranks candidates by relevance and bounded recency. A production-scale reranker remains optional. |
 | Grounded answer generation | Complete for MVP | Extractive answers use retrieved evidence and refuse when no evidence matches. A hosted LLM adapter is not configured. |
 | Citations with links and dates | Complete | Query responses expose source citations and the Streamlit UI renders links and publication dates. |
 | Streamlit chat interface | Complete | `app.py` provides chat, filters, date selection, loading/error states, ingestion, and Today's Briefing. |

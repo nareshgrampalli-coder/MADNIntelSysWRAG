@@ -66,9 +66,9 @@ class QueryEngine:
             question,
             category=filters.category,
             published_after=filters.published_after,
-            limit=self.retrieval_limit,
+            limit=max(self.retrieval_limit * 3, self.retrieval_limit),
         )
-        chunks.sort(key=lambda chunk: chunk.published_at, reverse=True)
+        chunks = _rerank(question, chunks, now=self.interpreter.clock())[: self.retrieval_limit]
         if not chunks:
             return QueryResponse(answer="I don't have news on that.")
         citations = _citations(chunks)
@@ -103,3 +103,25 @@ def _citations(chunks: list[ArticleChunk]) -> list[SourceCitation]:
             )
         )
     return citations
+
+
+def _rerank(question: str, chunks: list[ArticleChunk], now: datetime) -> list[ArticleChunk]:
+    """Prefer query-relevant evidence while giving recent news a bounded boost."""
+    if not chunks:
+        return []
+    scored: list[tuple[float, ArticleChunk]] = []
+    for chunk in chunks:
+        relevance = _term_overlap(question, f"{chunk.metadata.get('title', '')} {chunk.text}")
+        age_days = max(0.0, (now - chunk.published_at).total_seconds() / 86400)
+        recency = 1.0 / (1.0 + age_days)
+        scored.append((0.9 * relevance + 0.1 * recency, chunk))
+    scored.sort(key=lambda item: (item[0], item[1].published_at.timestamp()), reverse=True)
+    return [chunk for _, chunk in scored]
+
+
+def _term_overlap(query: str, document: str) -> float:
+    query_terms = set(re.findall(r"[a-z0-9]+", query.casefold()))
+    document_terms = set(re.findall(r"[a-z0-9]+", document.casefold()))
+    if not query_terms:
+        return 0.0
+    return len(query_terms & document_terms) / len(query_terms)
