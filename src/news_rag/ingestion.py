@@ -121,17 +121,24 @@ class _ArticleTextExtractor(HTMLParser):
         super().__init__()
         self.parts: list[str] = []
         self._ignored_depth = 0
+        self._content_depth = 0
+        self._has_content_container = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in {"script", "style", "nav", "footer", "header", "aside", "form"}:
             self._ignored_depth += 1
+        if tag in {"article", "main"}:
+            self._content_depth += 1
+            self._has_content_container = True
 
     def handle_endtag(self, tag: str) -> None:
         if tag in {"script", "style", "nav", "footer", "header", "aside", "form"} and self._ignored_depth:
             self._ignored_depth -= 1
+        if tag in {"article", "main"} and self._content_depth:
+            self._content_depth -= 1
 
     def handle_data(self, data: str) -> None:
-        if not self._ignored_depth:
+        if not self._ignored_depth and (not self._has_content_container or self._content_depth):
             self.parts.append(data)
 
 

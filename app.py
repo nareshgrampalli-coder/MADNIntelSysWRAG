@@ -1,5 +1,8 @@
 """Streamlit user interface for the News RAG application."""
 
+from concurrent.futures import ThreadPoolExecutor
+from time import monotonic, sleep
+
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory
@@ -109,8 +112,16 @@ def main() -> None:
                 unsafe_allow_html=True,
             )
         if st.button("Run ingestion", type="primary" if ingestion_done else "secondary"):
-            with st.spinner("Collecting and indexing sources..."):
-                report = pipeline.run_once()
+            countdown = st.empty()
+            started = monotonic()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(pipeline.run_once)
+                while not future.done():
+                    remaining = max(0, 90 - int(monotonic() - started))
+                    countdown.info(f"Collecting and indexing sources... approximately {remaining}s remaining")
+                    sleep(1)
+                report = future.result()
+            countdown.empty()
             if report.succeeded:
                 st.session_state.ingestion_completed = True
             if report.succeeded:
@@ -243,7 +254,9 @@ def main() -> None:
             answer_lines = [line.strip("- ").strip() for line in response.answer.splitlines() if line.strip()]
             if len(answer_lines) < 3:
                 answer_lines = [part.strip() for part in response.answer.split(". ") if part.strip()]
-            chat_answer = "\n".join(f"- {line.rstrip('.')}" for line in answer_lines[:3])
+            chat_answer = "\n".join(
+                f"- {line.rstrip('. ')[:180].rstrip()}" for line in answer_lines[:3]
+            )
             st.markdown(chat_answer)
             if response.citations:
                 with st.expander("Sources"):

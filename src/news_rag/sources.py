@@ -10,7 +10,7 @@ RELEVANCE_TERMS: dict[NewsCategory, tuple[str, ...]] = {
     NewsCategory.TECHNOLOGY: ("technology", "software", "ai", "cybersecurity", "startup", "digital"),
     NewsCategory.FINANCE: ("market", "rbi", "bank", "finance", "earnings", "stocks", "economy"),
     NewsCategory.POLITICS: ("government", "minister", "election", "policy", "parliament", "politics"),
-    NewsCategory.STOCKS: ("india", "nse", "bse", "sensex", "nifty", "stocks", "shares"),
+    NewsCategory.STOCKS: ("nse", "bse", "sensex", "nifty", "stocks", "shares"),
 }
 
 
