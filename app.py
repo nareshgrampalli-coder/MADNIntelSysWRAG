@@ -50,9 +50,16 @@ def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> li
     for category in NewsCategory:
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
-        citations = tuple(
-            citation for citation in response.citations if citation.url not in seen_urls
-        )[:6]
+        citations = [citation for citation in response.citations if citation.url not in seen_urls]
+        if len(citations) < 6:
+            latest_response = engine.answer(f"latest {topic} news", relevance_threshold=0.0)
+            category_urls = {citation.url for citation in citations}
+            citations.extend(
+                citation
+                for citation in latest_response.citations
+                if citation.url not in seen_urls and citation.url not in category_urls
+            )
+        citations = tuple(citations[:6])
         if not citations:
             continue
         seen_urls.update(citation.url for citation in citations)
