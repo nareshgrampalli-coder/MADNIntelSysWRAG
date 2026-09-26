@@ -59,7 +59,7 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
 
     briefing = build_todays_briefing(store, datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
 
-    assert [category for category, _ in briefing] == [NewsCategory.FINANCE, NewsCategory.STOCKS]
+    assert [category for category, _ in briefing] == list(NewsCategory)
 
 
 def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:

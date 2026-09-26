@@ -49,8 +49,7 @@ def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> li
     for category in NewsCategory:
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today")
-        if response.grounded:
-            briefing.append((category, response))
+        briefing.append((category, response))
     return briefing
 
 
@@ -108,23 +107,26 @@ def main() -> None:
     if show_briefing:
         st.subheader("Today's Briefing")
         briefing = build_todays_briefing(store)
-        if not briefing:
-            st.info("No news has been indexed for today.")
         for category, response in briefing:
             with st.expander(category_label(category), expanded=True):
+                if not response.grounded:
+                    st.info("No news has been indexed for today.")
+                    continue
                 st.markdown(response.answer)
+                columns = st.columns(min(3, max(1, len(response.citations))))
                 for index, citation in enumerate(response.citations):
-                    with st.container(border=True):
-                        st.markdown(f"**{citation.title}**")
-                        st.caption(f"{citation.source} | {citation.published_at.strftime('%d-%b-%Y')}")
-                        if st.button("View article details", key=f"briefing-article-{category.value}-{index}"):
-                            show_article_details(
-                                citation.title,
-                                citation.source,
-                                citation.published_at.strftime("%d-%b-%Y"),
-                                response.answer,
-                                citation.url,
-                            )
+                    with columns[index % len(columns)]:
+                        with st.container(border=True):
+                            st.markdown(f"**{citation.title}**")
+                            st.caption(f"{citation.source} | {citation.published_at.strftime('%d-%b-%Y')}")
+                            if st.button("View details", key=f"briefing-article-{category.value}-{index}"):
+                                show_article_details(
+                                    citation.title,
+                                    citation.source,
+                                    citation.published_at.strftime("%d-%b-%Y"),
+                                    response.answer,
+                                    citation.url,
+                                )
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
