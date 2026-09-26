@@ -192,16 +192,22 @@ def main() -> None:
         if st.button("Run RAG pipeline", type="primary" if rag_done else "secondary"):
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
-                st.write("Data Ingestion: complete")
-                st.write("Text Chunking: complete")
-                st.write("Embedding Generation: complete")
-                st.write("Vector Database Storage: complete" if not report.errors else "Vector Database Storage: check errors")
-                st.write("Query Processing: ready for a question")
-                st.write("Similarity Search: ready for a question")
-                st.write("Prompt Augmentation: ready for a question")
-                st.write("Response Generation: ready for a question")
-                pipeline_status.update(label="RAG pipeline ready", state="complete")
-            if report.succeeded:
+                if report.succeeded and report.chunks_stored:
+                    pipeline_query = "Summarize today's technology, finance, politics, and stocks news."
+                    pipeline_response = engine.answer(pipeline_query)
+                    st.write(f"Data Ingestion: fetched {report.articles_fetched} articles")
+                    st.write(f"Text Chunking: created {report.chunks_stored} chunks")
+                    st.write("Embedding Generation: generated and indexed embeddings")
+                    st.write("Vector Database Storage: stored successfully")
+                    st.write("Query Processing: interpreted category and date filters")
+                    st.write(f"Similarity Search: retrieved {len(pipeline_response.citations)} sources")
+                    st.write("Prompt Augmentation: assembled grounded excerpts")
+                    st.write("Response Generation: generated grounded response")
+                    pipeline_status.update(label="RAG pipeline complete", state="complete")
+                else:
+                    st.write("RAG pipeline stopped: ingestion produced no usable chunks")
+                    pipeline_status.update(label="RAG pipeline failed", state="error")
+            if report.succeeded and report.chunks_stored:
                 st.session_state.ingestion_completed = True
                 st.session_state.rag_pipeline_completed = True
 
