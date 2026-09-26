@@ -72,6 +72,23 @@ def main() -> None:
         st.link_button("Read full article", url)
 
     st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
+    st.markdown(
+        """
+        <style>
+        @media (max-width: 640px) {
+            [data-testid="stHorizontalBlock"] {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            [data-testid="stHorizontalBlock"] > div {
+                width: 100% !important;
+                flex: 1 1 100% !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     st.title("News RAG Analyst")
     st.caption("Answers are generated only from indexed, dated source material.")
 
