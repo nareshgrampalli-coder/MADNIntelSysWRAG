@@ -21,4 +21,4 @@ py -m pytest
 
 ## Evaluation
 
-The 20-case evaluation set is in `evaluation/questions.json`. Record one score from 0 to 1 for accuracy, citation correctness, recency, and refusal quality for each case, then summarize the results using `news_rag.evaluation.summarize_scores`.
+The 20-case evaluation set is in `evaluation/questions.json`. Use `evaluation/SCORECARD.md` to record one score from 0 to 1 for accuracy, citation correctness, recency, and refusal quality for each case, then summarize the results using `news_rag.evaluation.summarize_scores`.

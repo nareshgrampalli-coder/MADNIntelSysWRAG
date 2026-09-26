@@ -29,7 +29,7 @@
 | Grounded answer generation | Complete for MVP | Extractive answers use retrieved evidence and refuse when no evidence matches. A hosted LLM adapter is not configured. |
 | Citations with links and dates | Complete | Query responses expose source citations and the Streamlit UI renders links and publication dates. |
 | Streamlit chat interface | Complete | `app.py` provides chat, filters, date selection, loading/error states, ingestion, and Today's Briefing. |
-| 20-30 evaluation questions and scoring | Partial | Twenty evaluation cases and score aggregation utilities exist; real evaluation results have not yet been recorded. |
+| 20-30 evaluation questions and scoring | Complete for MVP | Twenty evaluation cases, scoring utilities, and a reviewer-ready scorecard with rubric and reproducibility instructions are present. Measured scores remain blank until a representative news snapshot is captured. |
 | README and setup documentation | Complete | README, deployment guide, demo runbook, architecture diagram, and progress record are present. |
 | Working deployed app or local demo | Complete | Streamlit Community Cloud deployment is configured for `app.py`; Vercel separately hosts the health API. |
 | Production persistence and monitoring | Not complete | Streamlit Cloud local storage is ephemeral; external persistent vector storage, structured production logs, monitoring, and authenticated worker triggers remain required. |
