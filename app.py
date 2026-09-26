@@ -173,7 +173,13 @@ def main() -> None:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    question = st.chat_input("Ask about recent technology, finance, or politics news")
+    chat_disabled = store.count() == 0
+    if chat_disabled:
+        st.info("Run ingestion before asking a question.")
+    question = st.chat_input(
+        "Run ingestion to enable questions" if chat_disabled else "Ask about recent news",
+        disabled=chat_disabled,
+    )
     if question:
         category = next(
             (candidate for candidate in NewsCategory if category_label(candidate) == category_value),
