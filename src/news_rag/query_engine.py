@@ -112,6 +112,8 @@ def _rerank(question: str, chunks: list[ArticleChunk], now: datetime) -> list[Ar
     scored: list[tuple[float, ArticleChunk]] = []
     for chunk in chunks:
         relevance = _term_overlap(question, f"{chunk.metadata.get('title', '')} {chunk.text}")
+        if relevance < 0.5:
+            continue
         age_days = max(0.0, (now - chunk.published_at).total_seconds() / 86400)
         recency = 1.0 / (1.0 + age_days)
         scored.append((0.9 * relevance + 0.1 * recency, chunk))
@@ -120,7 +122,14 @@ def _rerank(question: str, chunks: list[ArticleChunk], now: datetime) -> list[Ar
 
 
 def _term_overlap(query: str, document: str) -> float:
-    query_terms = set(re.findall(r"[a-z0-9]+", query.casefold()))
+    stopwords = {
+        "a", "about", "after", "and", "did", "for", "in", "is", "latest", "news", "of",
+        "since", "the", "today", "what", "why",
+    }
+    query_terms = {
+        term for term in re.findall(r"[a-z0-9]+", query.casefold())
+        if term not in stopwords and not term.isdigit()
+    }
     document_terms = set(re.findall(r"[a-z0-9]+", document.casefold()))
     if not query_terms:
         return 0.0

@@ -59,7 +59,7 @@ class JsonVectorStore:
             self._records[chunk.chunk_id] = {
                 "id": chunk.chunk_id,
                 "text": chunk.text,
-                "embedding": self.embedding_provider.embed(chunk.text),
+                "embedding": self.embedding_provider.embed(_chunk_search_text(chunk)),
                 "metadata": _chunk_metadata(chunk),
             }
         self._save()
@@ -81,7 +81,7 @@ class JsonVectorStore:
             if published_after and published_at < published_after:
                 continue
             semantic_score = _cosine_similarity(query_embedding, record["embedding"])
-            lexical_score = _lexical_overlap(text, record["text"])
+            lexical_score = _lexical_overlap(text, _record_search_text(record))
             score = 0.7 * semantic_score + 0.3 * lexical_score
             candidates.append((score, _record_to_chunk(record)))
         candidates.sort(key=lambda item: item[0], reverse=True)
@@ -176,6 +176,16 @@ def _chunk_metadata(chunk: ArticleChunk) -> dict[str, str]:
         "published_at": chunk.published_at.isoformat(),
         **chunk.metadata,
     }
+
+
+def _chunk_search_text(chunk: ArticleChunk) -> str:
+    return f"{chunk.metadata.get('title', '')} {chunk.text}"
+
+
+def _record_search_text(record: dict[str, object]) -> str:
+    metadata = record["metadata"]
+    title = metadata.get("title", "") if isinstance(metadata, dict) else ""
+    return f"{title} {record['text']}"
 
 
 def _record_to_chunk(record: dict[str, object]) -> ArticleChunk:

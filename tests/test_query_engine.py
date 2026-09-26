@@ -72,3 +72,18 @@ def test_query_engine_reranks_relevant_evidence_before_recency(tmp_path) -> None
     response = QueryEngine(store).answer("What did the RBI announce?")
 
     assert response.citations[0].url.endswith("/relevant")
+
+
+def test_query_engine_prioritizes_support_and_resistance_evidence(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("decline", NewsCategory.STOCKS, 0, "SENSEX and Nifty declined today"),
+            make_chunk("support", NewsCategory.STOCKS, 1, "Analysts identify Sensex support and resistance levels"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("What is support and resistance for Sensex?")
+
+    assert response.grounded is True
+    assert response.citations[0].url.endswith("/support")
