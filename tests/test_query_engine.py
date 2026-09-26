@@ -126,6 +126,22 @@ def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
     assert response.answer.count("\n- ") == 1
 
 
+def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("one", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+            make_chunk("two", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+            make_chunk("three", NewsCategory.POLITICS, 0, "Parliament reviewed a new public policy"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("give me overall news summary in 3 bullet points")
+
+    assert response.grounded is True
+    assert response.answer.count("\n- ") == 2
+
+
 def test_query_engine_can_return_category_filtered_articles_without_topic_overlap(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert([make_chunk("rbi", NewsCategory.FINANCE, 0, "RBI held the policy rate steady")])

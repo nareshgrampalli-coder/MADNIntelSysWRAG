@@ -137,8 +137,9 @@ def _rerank(
 
 def _term_overlap(query: str, document: str) -> float:
     stopwords = {
-        "a", "about", "after", "and", "bullet", "bullets", "did", "for", "in", "is", "latest",
-        "news", "of", "points", "since", "summarize", "summary", "the", "today", "what", "why",
+        "a", "about", "after", "and", "bullet", "bullets", "did", "for", "give", "in", "is",
+        "latest", "me", "news", "of", "overall", "points", "since", "summarize", "summary",
+        "the", "today", "what", "why",
     }
     query_terms = {
         term for term in re.findall(r"[a-z0-9]+", query.casefold())
