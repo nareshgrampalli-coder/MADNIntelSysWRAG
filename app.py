@@ -24,6 +24,7 @@ RAG_STAGES = (
     "Prompt Augmentation",
     "Response Generation",
 )
+RAG_PIPELINE_UI_ENABLED = False
 
 
 def build_store(settings: Settings) -> VectorStore:
@@ -127,11 +128,12 @@ def main() -> None:
         rag_done = st.session_state.get("rag_pipeline_completed", False)
         rag_color = "#198754" if rag_done else "#dc3545"
         rag_label = "Complete" if rag_done else "Required"
-        st.markdown(
-            f'<div style="color:{rag_color};font-weight:700">Run RAG Pipeline: {rag_label}</div>',
-            unsafe_allow_html=True,
-        )
-        if not rag_done:
+        if RAG_PIPELINE_UI_ENABLED:
+            st.markdown(
+                f'<div style="color:{rag_color};font-weight:700">Run RAG Pipeline: {rag_label}</div>',
+                unsafe_allow_html=True,
+            )
+        if RAG_PIPELINE_UI_ENABLED and not rag_done:
             st.markdown(
                 """
                 <style>
@@ -149,7 +151,7 @@ def main() -> None:
                 """,
                 unsafe_allow_html=True,
             )
-        if st.button("Run RAG pipeline", type="primary" if rag_done else "secondary", disabled=True):
+        if RAG_PIPELINE_UI_ENABLED and st.button("Run RAG pipeline", type="primary" if rag_done else "secondary", disabled=True):
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
                 if report.succeeded and report.chunks_stored:
