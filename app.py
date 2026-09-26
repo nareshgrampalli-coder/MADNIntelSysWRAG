@@ -49,7 +49,7 @@ def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> li
     seen_urls: set[str] = set()
     for category in NewsCategory:
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
-        response = engine.answer(f"latest {topic} news today")
+        response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
         citations = tuple(
             citation for citation in response.citations if citation.url not in seen_urls
         )[:6]

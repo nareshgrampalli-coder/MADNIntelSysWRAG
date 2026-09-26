@@ -124,3 +124,13 @@ def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
     assert response.grounded is True
     assert response.answer.startswith("- ")
     assert response.answer.count("\n- ") == 1
+
+
+def test_query_engine_can_return_category_filtered_articles_without_topic_overlap(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert([make_chunk("rbi", NewsCategory.FINANCE, 0, "RBI held the policy rate steady")])
+
+    response = QueryEngine(store).answer("latest finance news today", relevance_threshold=0.0)
+
+    assert response.grounded is True
+    assert response.citations[0].url.endswith("/rbi")

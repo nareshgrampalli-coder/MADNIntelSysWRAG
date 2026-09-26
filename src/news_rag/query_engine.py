@@ -64,7 +64,7 @@ class QueryEngine:
         self.generator = generator or ExtractiveAnswerGenerator()
         self.retrieval_limit = retrieval_limit
 
-    def answer(self, question: str) -> QueryResponse:
+    def answer(self, question: str, relevance_threshold: float = 0.5) -> QueryResponse:
         filters = self.interpreter.interpret(question)
         chunks = self.store.query(
             question,
@@ -72,7 +72,12 @@ class QueryEngine:
             published_after=filters.published_after,
             limit=max(self.retrieval_limit * 3, self.retrieval_limit),
         )
-        chunks = _rerank(question, chunks, now=self.interpreter.clock())[: self.retrieval_limit]
+        chunks = _rerank(
+            question,
+            chunks,
+            now=self.interpreter.clock(),
+            minimum_relevance=relevance_threshold,
+        )[: self.retrieval_limit]
         if not chunks:
             return QueryResponse(answer="I don't have news on that.")
         citations = _citations(chunks)
@@ -109,14 +114,19 @@ def _citations(chunks: list[ArticleChunk]) -> list[SourceCitation]:
     return citations
 
 
-def _rerank(question: str, chunks: list[ArticleChunk], now: datetime) -> list[ArticleChunk]:
+def _rerank(
+    question: str,
+    chunks: list[ArticleChunk],
+    now: datetime,
+    minimum_relevance: float = 0.5,
+) -> list[ArticleChunk]:
     """Prefer query-relevant evidence while giving recent news a bounded boost."""
     if not chunks:
         return []
     scored: list[tuple[float, ArticleChunk]] = []
     for chunk in chunks:
         relevance = _term_overlap(question, f"{chunk.metadata.get('title', '')} {chunk.text}")
-        if relevance < 0.5:
+        if relevance < minimum_relevance:
             continue
         age_days = max(0.0, (now - chunk.published_at).total_seconds() / 86400)
         recency = 1.0 / (1.0 + age_days)
