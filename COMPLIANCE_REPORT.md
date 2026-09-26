@@ -16,7 +16,7 @@
 |---|---|---|
 | Technology, Finance, and Politics fetcher agents | Complete | `src/news_rag/ingestion.py` defines separate domain fetchers; `src/news_rag/sources.py` provides default feeds and environment overrides. |
 | Collect headline, body, URL, publication date, and source | Complete | RSS normalization produces typed `RawArticle` records with these fields. |
-| Source relevance rules and approved official sources | Partial | Domain boundaries and configurable feeds exist, but default feeds are Google News searches and official-source coverage is not guaranteed. |
+| Source relevance rules and approved official sources | Complete for MVP | Each domain has relevance terms, irrelevant feed items are filtered, and approved per-domain RSS URLs can be supplied through `*_APPROVED_RSS_URLS`. Official-source coverage still depends on the URLs configured by the operator. |
 | Scheduled orchestration | Partial | Manual runs and a lightweight interval scheduler exist in `src/news_rag/orchestration.py`; durable production scheduling is not deployed. |
 | Failure handling, retries, and run logging | Complete for MVP | RSS retries, fetcher isolation, run reports, timestamps, and errors are implemented and tested. |
 | Deduplication and boilerplate cleaning | Complete | URL/content-hash deduplication and deterministic HTML/boilerplate cleaning are implemented and tested. |

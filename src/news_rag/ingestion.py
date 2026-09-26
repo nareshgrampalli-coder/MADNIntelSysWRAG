@@ -20,6 +20,7 @@ class FeedSource:
     name: str
     url: str
     category: NewsCategory
+    relevance_terms: tuple[str, ...] = ()
 
 
 class RssSourceAdapter:
@@ -102,7 +103,7 @@ class DomainFetcher:
         articles: list[RawArticle] = []
         for source in self.sources:
             try:
-                articles.extend(self.adapter.fetch(source))
+                articles.extend(_filter_relevant(self.adapter.fetch(source), source.relevance_terms))
             except Exception:
                 logger.exception("Failed to fetch source %s", source.name)
         return deduplicate_articles(articles)
@@ -139,3 +140,14 @@ def _parse_date(value: str) -> datetime:
 
 def _normalize(value: str) -> str:
     return " ".join(value.lower().split())
+
+
+def _filter_relevant(articles: Iterable[RawArticle], relevance_terms: tuple[str, ...]) -> list[RawArticle]:
+    if not relevance_terms:
+        return list(articles)
+    terms = tuple(term.casefold() for term in relevance_terms)
+    return [
+        article
+        for article in articles
+        if any(term in f"{article.title} {article.content}".casefold() for term in terms)
+    ]

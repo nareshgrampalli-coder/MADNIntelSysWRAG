@@ -25,7 +25,7 @@ py -m pip install -e ".[ui]"
 streamlit run app.py
 ```
 
-The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, and `NEWS_RAG_POLITICS_RSS_URLS` in `.env` as comma-separated approved RSS URLs to replace those defaults.
+The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, and `NEWS_RAG_POLITICS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use `NEWS_RAG_TECHNOLOGY_APPROVED_RSS_URLS`, `NEWS_RAG_FINANCE_APPROVED_RSS_URLS`, and `NEWS_RAG_POLITICS_APPROVED_RSS_URLS` for operator-approved official feeds.
 
 ## Repository structure
 

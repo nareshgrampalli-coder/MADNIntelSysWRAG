@@ -68,6 +68,19 @@ def test_domain_fetcher_continues_after_source_failure() -> None:
     assert len(fetcher.fetch()) == 1
 
 
+def test_domain_fetcher_applies_source_relevance_terms() -> None:
+    class FakeAdapter:
+        def fetch(self, source: FeedSource):
+            return parse_rss(RSS, source)
+
+    fetcher = FinanceFetcher(
+        sources=(FeedSource("Finance", "https://example.com/rss", NewsCategory.FINANCE, ("markets",)),),
+        adapter=FakeAdapter(),
+    )
+
+    assert len(fetcher.fetch()) == 1
+
+
 def test_adapter_retries_then_returns_payload() -> None:
     attempts = 0
 
