@@ -99,6 +99,9 @@ def main() -> None:
                 flex: 1 1 100% !important;
             }
         }
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            min-height: 170px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
