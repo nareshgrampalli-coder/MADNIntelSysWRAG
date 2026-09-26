@@ -122,6 +122,13 @@ def main() -> None:
                 st.info("Run ingestion to see questions from today's news.")
 
     if show_briefing:
+        ingestion_key = date.today().isoformat()
+        if st.session_state.get("briefing_ingestion_date") != ingestion_key:
+            with st.spinner("Updating today's category news..."):
+                daily_report = pipeline.run_once()
+            st.session_state.briefing_ingestion_date = ingestion_key
+            if daily_report.errors:
+                st.warning("Some categories could not be updated: " + "; ".join(daily_report.errors))
         st.subheader("Today's Briefing")
         briefing = build_todays_briefing(store)
         for category, response in briefing:
