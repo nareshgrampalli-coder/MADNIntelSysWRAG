@@ -131,11 +131,12 @@ def main() -> None:
         ingestion_done = st.session_state.get("ingestion_completed", False)
         ingestion_color = "#198754" if ingestion_done else "#dc3545"
         ingestion_label = "Complete" if ingestion_done else "Required"
-        st.markdown(
-            f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("Run ingestion", type="secondary"):
+        if not ingestion_done:
+            st.markdown(
+                f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
+                unsafe_allow_html=True,
+            )
+        if st.button("Run ingestion", type="primary" if ingestion_done else "secondary"):
             with st.spinner("Collecting and indexing sources..."):
                 report = pipeline.run_once()
             if report.succeeded:
