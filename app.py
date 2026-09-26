@@ -151,8 +151,8 @@ def main() -> None:
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
                 if report.succeeded and report.chunks_stored:
-                    pipeline_query = "Summarize today's technology, finance, politics, and stocks news."
-                    pipeline_response = engine.answer(pipeline_query)
+                    pipeline_query = "Summarize latest news in 3 bullet points."
+                    pipeline_response = engine.answer(pipeline_query, relevance_threshold=0.0)
                     st.write(f"Data Ingestion: fetched {report.articles_fetched} articles")
                     st.write(f"Text Chunking: created {report.chunks_stored} chunks")
                     st.write("Embedding Generation: generated and indexed embeddings")
