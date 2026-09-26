@@ -1,7 +1,5 @@
 """Streamlit user interface for the News RAG application."""
 
-from datetime import date
-
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory
@@ -11,6 +9,7 @@ from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
 from news_rag.ui_helpers import apply_filters, category_label, citation_lines
 from news_rag.app_support import build_sample_questions, build_todays_briefing
+from news_rag.briefing_view import render_todays_briefing
 from news_rag.ui_styles import apply_styles
 
 
@@ -185,35 +184,7 @@ def main() -> None:
     def render_briefing() -> None:
         if not show_briefing:
             return
-        ingestion_key = date.today().isoformat()
-        if st.session_state.get("briefing_ingestion_date") != ingestion_key:
-            with st.spinner("Updating today's category news..."):
-                daily_report = pipeline.run_once()
-            st.session_state.briefing_ingestion_date = ingestion_key
-            if daily_report.succeeded:
-                st.session_state.ingestion_completed = True
-            if daily_report.errors:
-                st.warning("Some categories could not be updated: " + "; ".join(daily_report.errors))
-        st.subheader("Today's Briefing")
-        briefing = build_todays_briefing(store)
-        if not briefing:
-            st.info("No indexed news is available for today.")
-        for category, response in briefing:
-            with st.expander(category_label(category), expanded=False):
-                columns = st.columns(min(3, max(1, len(response.citations))))
-                for index, citation in enumerate(response.citations):
-                    with columns[index % len(columns)]:
-                        with st.container(border=True):
-                            st.markdown(f"**{citation.title}**")
-                            st.caption(f"{citation.source} | {citation.published_at.strftime('%d-%b-%Y')}")
-                            if st.button("View details", key=f"briefing-article-{category.value}-{index}"):
-                                show_article_details(
-                                    citation.title,
-                                    citation.source,
-                                    citation.published_at.strftime("%d-%b-%Y"),
-                                    getattr(citation, "summary", "") or response.answer,
-                                    citation.url,
-                                )
+        render_todays_briefing(st, store, show_article_details)
 
     render_briefing()
 
@@ -246,14 +217,18 @@ def main() -> None:
                 except Exception as error:
                     st.error(f"Unable to answer this question: {error}")
                     return
-            st.markdown(response.answer)
+            answer_lines = [line.strip("- ").strip() for line in response.answer.splitlines() if line.strip()]
+            if len(answer_lines) < 3:
+                answer_lines = [part.strip() for part in response.answer.split(". ") if part.strip()]
+            chat_answer = "\n".join(f"- {line.rstrip('.')}" for line in answer_lines[:3])
+            st.markdown(chat_answer)
             if response.citations:
                 with st.expander("Sources"):
                     for line in citation_lines(response):
                         st.markdown(line)
             elif not response.grounded:
                 st.info("No matching sources were found.")
-        st.session_state.messages.append({"role": "assistant", "content": response.answer})
+        st.session_state.messages.append({"role": "assistant", "content": chat_answer})
 
 
 if __name__ == "__main__":
