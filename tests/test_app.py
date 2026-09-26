@@ -120,7 +120,7 @@ def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
     assert briefing == []
 
 
-def test_build_todays_briefing_uses_previous_day_when_today_is_empty(tmp_path) -> None:
+def test_build_todays_briefing_does_not_use_previous_day_when_today_is_empty(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
         [
@@ -139,7 +139,7 @@ def test_build_todays_briefing_uses_previous_day_when_today_is_empty(tmp_path) -
 
     briefing = build_todays_briefing(store, datetime(2026, 9, 6, 12, tzinfo=timezone.utc))
 
-    assert [category for category, _ in briefing] == [NewsCategory.STOCKS]
+    assert briefing == []
 
 
 def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:

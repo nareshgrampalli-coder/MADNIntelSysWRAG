@@ -29,7 +29,7 @@ Phase 8 - Vercel Deployment: **complete**
 - Kept answer generation provider-neutral for a future hosted or local LLM adapter.
 - Added an optional Streamlit chat interface with category/date filters, citations, loading/error states, and manual ingestion controls.
 - Added UI helper tests and documented the optional `ui` dependency extra.
-- Added an optional Today's Briefing panel with one grounded, cited section per domain for the last 24 hours.
+- Added an optional Today's Briefing panel with one grounded, cited section per domain using current-calendar-day articles only.
 - Added a 20-case evaluation dataset covering accuracy, citations, recency, filtering, and refusal behavior.
 - Added evaluation case loading and score summarization utilities.
 - Added the architecture diagram and demo runbook.

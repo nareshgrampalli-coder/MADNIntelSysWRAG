@@ -29,7 +29,7 @@ class QueryInterpreter:
             category = NewsCategory.STOCKS
         now = self.clock()
         if "today" in normalized:
-            published_after = now - timedelta(days=1)
+            published_after = now.replace(hour=0, minute=0, second=0, microsecond=0)
         elif "this week" in normalized or "last 7 days" in normalized:
             published_after = now - timedelta(days=7)
         elif "this month" in normalized:

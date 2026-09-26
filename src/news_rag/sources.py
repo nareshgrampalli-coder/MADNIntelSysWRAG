@@ -1,7 +1,6 @@
 """Default and environment-configured RSS sources."""
 
 import os
-from urllib.parse import quote_plus
 
 from .ingestion import FeedSource
 from .models import NewsCategory
@@ -15,32 +14,33 @@ RELEVANCE_TERMS: dict[NewsCategory, tuple[str, ...]] = {
 }
 
 
-def _google_news_source(category: NewsCategory, query: str) -> FeedSource:
+PUBLISHER_FEEDS: tuple[tuple[str, str], ...] = (
+    ("Indian Express", "https://indianexpress.com/feed/"),
+    ("NDTV", "https://feeds.feedburner.com/ndtvnews-top-stories"),
+    ("The Hindu", "https://www.thehindu.com/feeder/default.rss"),
+    ("LiveMint", "https://www.livemint.com/rss/markets"),
+)
+YAHOO_FINANCE_FEED = ("Yahoo Finance", "https://finance.yahoo.com/rss/")
+
+
+def _publisher_source(category: NewsCategory, publisher: str, url: str) -> FeedSource:
     return FeedSource(
-        name=f"Google News - {category.value.title()}",
-        url=f"https://news.google.com/rss/search?q={quote_plus(query)}&hl=en-IN&gl=IN&ceid=IN:en",
+        name=f"{publisher} - {category.value.title()}",
+        url=url,
         category=category,
         relevance_terms=RELEVANCE_TERMS[category],
     )
 
 
-DEFAULT_SOURCES: tuple[FeedSource, ...] = (
-    _google_news_source(NewsCategory.TECHNOLOGY, "technology India"),
-    _google_news_source(NewsCategory.TECHNOLOGY, "AI cybersecurity startups India"),
-    _google_news_source(NewsCategory.TECHNOLOGY, "software digital innovation India"),
-    _google_news_source(NewsCategory.TECHNOLOGY, "technology companies India funding"),
-    _google_news_source(NewsCategory.FINANCE, "finance India markets"),
-    _google_news_source(NewsCategory.FINANCE, "RBI economy earnings India"),
-    _google_news_source(NewsCategory.FINANCE, "Indian banking financial policy"),
-    _google_news_source(NewsCategory.FINANCE, "India business corporate finance"),
-    _google_news_source(NewsCategory.POLITICS, "politics India"),
-    _google_news_source(NewsCategory.POLITICS, "India government parliament policy"),
-    _google_news_source(NewsCategory.POLITICS, "India minister political decision"),
-    _google_news_source(NewsCategory.POLITICS, "India law election public policy"),
-    _google_news_source(NewsCategory.STOCKS, "India stock market NSE BSE Nifty Sensex"),
-    _google_news_source(NewsCategory.STOCKS, "Indian shares market closing today"),
-    _google_news_source(NewsCategory.STOCKS, "Nifty Sensex stock market analysis India"),
-    _google_news_source(NewsCategory.STOCKS, "BSE NSE Indian stocks business news"),
+DEFAULT_SOURCES: tuple[FeedSource, ...] = tuple(
+    _publisher_source(category, publisher, url)
+    for category in NewsCategory
+    for publisher, url in (
+        (YAHOO_FINANCE_FEED,) + PUBLISHER_FEEDS[:3]
+        + PUBLISHER_FEEDS[3:]
+        if category is NewsCategory.FINANCE
+        else PUBLISHER_FEEDS
+    )
 )
 
 

@@ -6,7 +6,7 @@ Improve ingestion freshness, retrieval relevance, answer quality, and operationa
 ## Priorities
 
 ### Phase 1: Data Freshness and Recovery
-- [x] Prevent Today's Briefing from using older-than-previous-day articles.
+- [x] Restrict Today's Briefing to articles from the current calendar day.
 - [x] Add a reset-and-reingest control for stale local vector data.
 - [x] Report per-category ingestion counts, rejected items, and feed errors.
 - [x] Reject malformed publication dates instead of silently treating them as current.

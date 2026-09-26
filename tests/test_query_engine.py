@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from news_rag.models import ArticleChunk, NewsCategory
@@ -67,6 +68,26 @@ def test_query_engine_supports_explicit_dates(tmp_path) -> None:
     response = QueryEngine(store, interpreter=interpreter).answer("Politics news since 2026-09-25")
 
     assert response.grounded is True
+
+
+def test_query_engine_today_uses_calendar_day_only(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    yesterday = replace(
+        make_chunk("yesterday", NewsCategory.POLITICS, 0, "Politics update yesterday"),
+        published_at=datetime(2026, 9, 25, 23, 59, tzinfo=timezone.utc),
+    )
+    today = replace(
+        make_chunk("today", NewsCategory.POLITICS, 0, "Politics update today"),
+        published_at=datetime(2026, 9, 26, 0, 1, tzinfo=timezone.utc),
+    )
+    store.upsert(
+        [yesterday, today]
+    )
+    interpreter = QueryInterpreter(clock=lambda: datetime(2026, 9, 26, 1, tzinfo=timezone.utc))
+
+    response = QueryEngine(store, interpreter=interpreter).answer("Politics news today")
+
+    assert [citation.url for citation in response.citations] == ["https://example.com/today"]
 
 
 def test_query_engine_reranks_relevant_evidence_before_recency(tmp_path) -> None:

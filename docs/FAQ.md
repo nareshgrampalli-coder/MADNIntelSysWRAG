@@ -52,7 +52,7 @@ Broad summaries return only the available indexed evidence and do not invent mis
 
 ## How does the app handle stale news?
 
-Today's Briefing prefers articles from the current day. If no current-day article is available for a category, it may use the previous calendar day's verified articles. Older indexed stories are not presented as today's news.
+Today's Briefing shows only articles published on the current calendar day. If no current-day article is available for a category, that category is omitted rather than showing older indexed stories.
 
 ## Are answers generated from the open web at question time?
 

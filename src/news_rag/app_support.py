@@ -1,6 +1,6 @@
 """Application-facing data preparation helpers."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from .models import NewsCategory, QueryResponse
 from .query_engine import QueryEngine, QueryInterpreter
@@ -34,14 +34,6 @@ def build_todays_briefing(
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
         citations = [citation for citation in response.citations if citation.url not in seen_urls]
-        if not citations:
-            previous_day = (clock() - timedelta(days=1)).date()
-            previous_response = engine.answer(f"latest {topic} news", relevance_threshold=0.0)
-            citations = [
-                citation
-                for citation in previous_response.citations
-                if citation.published_at.date() == previous_day and citation.url not in seen_urls
-            ]
         citations = tuple(citations[:6])
         if not citations:
             continue

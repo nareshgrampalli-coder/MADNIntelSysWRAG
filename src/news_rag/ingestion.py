@@ -62,13 +62,12 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
     for item in root.findall(".//item"):
         title = _text(item.find("title"))
         url = _text(item.find("link"))
-        content = _text(item.find("description"))
-        if not title or not url or not content:
+        content = _rss_content(item) or title
+        if not title or not url:
             logger.warning("Skipping incomplete RSS item from %s", source.name)
             continue
         published_at = _parse_date(_text(item.find("pubDate")))
         if published_at is None:
-            logger.warning("Skipping article with invalid publication date from %s", source.name)
             continue
         articles.append(
             RawArticle(
@@ -81,6 +80,17 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
             )
         )
     return articles
+
+
+def _rss_content(item: ET.Element) -> str:
+    """Return the first usable summary/body field from an RSS item."""
+    content = _text(item.find("description"))
+    if content:
+        return content
+    for child in item:
+        if child.tag.rsplit("}", 1)[-1] == "encoded":
+            return _text(child)
+    return ""
 
 
 def deduplicate_articles(articles: Iterable[RawArticle]) -> list[RawArticle]:
@@ -143,7 +153,10 @@ def _parse_date(value: str) -> datetime | None:
     try:
         parsed = parsedate_to_datetime(value)
     except (TypeError, ValueError):
-        return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 

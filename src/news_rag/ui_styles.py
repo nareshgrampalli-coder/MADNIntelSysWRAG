@@ -42,6 +42,16 @@ def apply_styles(st) -> None:
             background: var(--news-surface);
             box-shadow: var(--news-shadow);
         }
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stVerticalBlockBorderWrapper"]) {
+            display: flex;
+        }
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stVerticalBlockBorderWrapper"]) > div {
+            flex: 1 1 auto;
+        }
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stVerticalBlockBorderWrapper"]) [data-testid="stVerticalBlockBorderWrapper"] {
+            height: 100%;
+            box-sizing: border-box;
+        }
         [data-testid="stExpander"] {
             border: 1px solid var(--news-border);
             border-radius: var(--news-radius);

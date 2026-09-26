@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime, timezone
 
 from news_rag.ingestion import (
     FeedSource,
@@ -39,6 +39,29 @@ def test_parse_rss_normalizes_article_fields() -> None:
     assert articles[0].category is NewsCategory.FINANCE
     assert articles[0].published_at.tzinfo == timezone.utc
     assert articles[0].content == "Markets moved after the announcement."
+
+
+def test_parse_rss_accepts_items_without_description() -> None:
+    source = FeedSource("Example Finance", "https://example.com/rss", NewsCategory.FINANCE)
+    payload = RSS.replace(
+        b"<description>Markets moved after the announcement.</description>",
+        b"",
+        1,
+    )
+
+    articles = parse_rss(payload, source)
+
+    assert len(articles) == 2
+    assert articles[0].content == articles[0].title
+
+
+def test_parse_rss_accepts_iso_publication_dates() -> None:
+    source = FeedSource("Yahoo Finance", "https://finance.yahoo.com/rss/", NewsCategory.FINANCE)
+    payload = RSS.replace(b"Sat, 26 Sep 2026 08:00:00 GMT", b"2026-09-26T08:00:00Z")
+
+    articles = parse_rss(payload, source)
+
+    assert articles[0].published_at == datetime(2026, 9, 26, 8, tzinfo=timezone.utc)
 
 
 def test_deduplicate_articles_removes_duplicate_content() -> None:
@@ -132,3 +155,17 @@ def test_default_sources_exist_for_each_domain() -> None:
 def test_default_sources_provide_multiple_queries_per_domain() -> None:
     for category in NewsCategory:
         assert len(sources_for(category)) >= 4
+
+    assert len(sources_for(NewsCategory.FINANCE)) == 5
+
+
+def test_default_sources_use_requested_indian_publishers() -> None:
+    urls = {source.url for category in NewsCategory for source in sources_for(category)}
+
+    assert urls == {
+        "https://finance.yahoo.com/rss/",
+        "https://indianexpress.com/feed/",
+        "https://feeds.feedburner.com/ndtvnews-top-stories",
+        "https://www.thehindu.com/feeder/default.rss",
+        "https://www.livemint.com/rss/markets",
+    }
