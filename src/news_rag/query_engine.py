@@ -45,10 +45,53 @@ class ExtractiveAnswerGenerator:
     def generate(self, question: str, chunks: list[ArticleChunk]) -> str:
         if not chunks:
             return "I don't have news on that."
-        excerpts = [chunk.text.rstrip(". ") + "." for chunk in chunks[:3]]
-        if "summar" in question.casefold() or "bullet" in question.casefold():
-            return "\n".join(f"- {excerpt}" for excerpt in excerpts)
-        return " ".join(excerpts)
+        query_terms = _summary_terms(question)
+        candidates: list[tuple[float, int, str]] = []
+        seen: set[str] = set()
+        order = 0
+        for chunk in chunks:
+            text = _clean_excerpt(chunk.text)
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                sentence = sentence.strip(" -")
+                key = sentence.casefold()
+                if len(sentence) < 15 or key in seen:
+                    continue
+                seen.add(key)
+                sentence_terms = set(re.findall(r"[a-z0-9]+", key))
+                relevance = len(query_terms & sentence_terms) / max(1, len(query_terms))
+                candidates.append((relevance, order, sentence.rstrip(".!?") + "."))
+                order += 1
+        candidates.sort(key=lambda item: (-item[0], item[1]))
+        excerpts = [sentence for _, _, sentence in candidates[:3]]
+        if not excerpts:
+            excerpts = [_clean_excerpt(chunks[0].text).rstrip(".!?") + "."]
+        return "\n".join(f"- {excerpt}" for excerpt in excerpts)
+
+
+def _clean_excerpt(value: str) -> str:
+    text = " ".join(value.split())
+    for phrase in (
+        "You are logged in",
+        "Loading",
+        "LOGOUT",
+        "You don't have any Active Subscription",
+        "You do not have any Active Subscription",
+    ):
+        text = re.sub(re.escape(phrase), " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(?:Get Latest|View Market Dashboard|Read more)\b.*", "", text, flags=re.IGNORECASE)
+    return " ".join(text.split())
+
+
+def _summary_terms(question: str) -> set[str]:
+    stopwords = {
+        "a", "about", "an", "and", "are", "can", "did", "for", "give", "how", "in", "is", "me",
+        "more", "news", "of", "on", "please", "recent", "summarize", "tell", "the", "this", "today",
+        "what", "when", "which", "why", "with", "you",
+    }
+    return {
+        term for term in re.findall(r"[a-z0-9]+", question.casefold())
+        if term not in stopwords and not term.isdigit()
+    }
 
 
 class QueryEngine:
@@ -79,7 +122,12 @@ class QueryEngine:
             chunks,
             now=self.interpreter.clock(),
             minimum_relevance=relevance_threshold,
-        )[: self.retrieval_limit]
+        )
+        if _requests_single_article(question):
+            focused_chunks = _focus_article_chunks(question, chunks)
+            if focused_chunks:
+                chunks = focused_chunks
+        chunks = chunks[: self.retrieval_limit]
         if not chunks:
             return QueryResponse(answer="I don't have news on that.")
         citations = _citations(chunks)
@@ -138,6 +186,23 @@ def _citations(chunks: list[ArticleChunk]) -> list[SourceCitation]:
 def _requests_each_category(question: str) -> bool:
     normalized = question.casefold()
     return "each categor" in normalized or "every categor" in normalized
+
+
+def _requests_single_article(question: str) -> bool:
+    normalized = question.casefold()
+    return bool(re.search(r"\b(?:what is|what's|tell me about|explain)\b.*\barticle\b", normalized))
+
+
+def _focus_article_chunks(question: str, chunks: list[ArticleChunk]) -> list[ArticleChunk]:
+    query_terms = _summary_terms(question) - {"article"}
+    if not query_terms:
+        return chunks
+    title_matches = [
+        chunk
+        for chunk in chunks
+        if len(query_terms & set(re.findall(r"[a-z0-9]+", chunk.metadata.get("title", "").casefold()))) >= 2
+    ]
+    return title_matches or chunks
 
 
 def _rerank(

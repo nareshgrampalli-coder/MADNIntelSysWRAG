@@ -75,7 +75,7 @@ def main() -> None:
         st.divider()
         show_briefing = st.checkbox("Today's Briefing", value=True)
         st.metric("Indexed chunks", store.count())
-        if st.button("Reset indexed data", type="tertiary"):
+        if st.button("Reset Indexed chunks data", type="tertiary"):
             store.reset()
             st.session_state.ingestion_completed = False
             st.session_state.rag_pipeline_completed = False
@@ -121,6 +121,7 @@ def main() -> None:
                     countdown.info(f"Collecting and indexing sources... approximately {remaining}s remaining")
                     sleep(1)
                 report = future.result()
+            elapsed_seconds = monotonic() - started
             countdown.empty()
             if report.succeeded:
                 st.session_state.ingestion_completed = True
@@ -130,10 +131,15 @@ def main() -> None:
                 ) or "no category data"
                 st.success(
                     f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
-                    f"By category: {category_counts}."
+                    f"By category: {category_counts}. "
+                    f"Ingestion time: {elapsed_seconds:.1f}s."
                 )
             else:
-                st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
+                st.warning(
+                    "Ingestion completed with errors: "
+                    + "; ".join(report.errors)
+                    + f" Ingestion time: {elapsed_seconds:.1f}s."
+                )
 
         rag_done = st.session_state.get("rag_pipeline_completed", False)
         rag_color = "#198754" if rag_done else "#dc3545"
@@ -240,7 +246,11 @@ def main() -> None:
             (candidate for candidate in NewsCategory if category_label(candidate) == category_value),
             None,
         )
-        effective_question = apply_filters(question, category, start_date)
+        recent_context = " ".join(
+            message["content"] for message in st.session_state.messages[-6:] if message["role"] == "user"
+        )
+        contextual_question = f"{recent_context} {question}".strip()
+        effective_question = apply_filters(contextual_question, category, start_date)
         st.session_state.messages.append({"role": "user", "content": question})
         with st.chat_message("user"):
             st.markdown(question)

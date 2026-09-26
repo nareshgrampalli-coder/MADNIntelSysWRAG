@@ -169,6 +169,31 @@ def test_adapter_fetches_article_content_from_links() -> None:
     assert articles[0].content == "Full article body from the link."
 
 
+def test_adapter_removes_publisher_session_boilerplate() -> None:
+    source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
+    html = b"<article>Article body. You are logged in Loading LOGOUT You don't have any Active Subscription</article>"
+
+    class Response:
+        def __init__(self, payload: bytes):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return self.payload
+
+    def opener(request, timeout):
+        return Response(RSS if request.full_url.endswith("/rss") else html)
+
+    articles = RssSourceAdapter(opener=opener, retries=0).fetch(source)
+
+    assert articles[0].content == "Article body."
+
+
 def test_default_sources_exist_for_each_domain(monkeypatch) -> None:
     monkeypatch.delenv("NEWS_RAG_FINANCE_RSS_URLS", raising=False)
     monkeypatch.delenv("NEWS_RAG_FINANCE_APPROVED_RSS_URLS", raising=False)
@@ -194,9 +219,17 @@ def test_google_news_overrides_fall_back_to_publisher_defaults(monkeypatch) -> N
 
 def test_default_sources_provide_multiple_queries_per_domain() -> None:
     for category in NewsCategory:
-        assert len(sources_for(category)) >= 4
+        assert sources_for(category)
 
     assert len(sources_for(NewsCategory.FINANCE)) == 5
+
+
+def test_stocks_sources_use_only_livemint_markets() -> None:
+    sources = sources_for(NewsCategory.STOCKS)
+
+    assert len(sources) == 1
+    assert sources[0].name == "LiveMint - Stocks"
+    assert sources[0].url == "https://www.livemint.com/rss/markets"
 
 
 def test_default_sources_use_requested_indian_publishers() -> None:

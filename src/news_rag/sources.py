@@ -36,9 +36,10 @@ DEFAULT_SOURCES: tuple[FeedSource, ...] = tuple(
     _publisher_source(category, publisher, url)
     for category in NewsCategory
     for publisher, url in (
-        (YAHOO_FINANCE_FEED,) + PUBLISHER_FEEDS[:3]
-        + PUBLISHER_FEEDS[3:]
+        (YAHOO_FINANCE_FEED,) + PUBLISHER_FEEDS
         if category is NewsCategory.FINANCE
+        else (PUBLISHER_FEEDS[3],)
+        if category is NewsCategory.STOCKS
         else PUBLISHER_FEEDS
     )
 )

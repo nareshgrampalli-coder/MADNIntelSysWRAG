@@ -8,6 +8,7 @@ from email.utils import parsedate_to_datetime
 import hashlib
 from html.parser import HTMLParser
 import logging
+import re
 from time import sleep
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
@@ -145,7 +146,16 @@ class _ArticleTextExtractor(HTMLParser):
 def _extract_article_text(payload: bytes) -> str:
     parser = _ArticleTextExtractor()
     parser.feed(payload.decode("utf-8", errors="replace"))
-    return " ".join(" ".join(parser.parts).split())
+    text = " ".join(" ".join(parser.parts).split())
+    for phrase in (
+        "You are logged in",
+        "Loading",
+        "LOGOUT",
+        "You don't have any Active Subscription",
+        "You do not have any Active Subscription",
+    ):
+        text = re.sub(re.escape(phrase), " ", text, flags=re.IGNORECASE)
+    return " ".join(text.split())
 
 
 def deduplicate_articles(articles: Iterable[RawArticle]) -> list[RawArticle]:

@@ -147,6 +147,75 @@ def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
     assert response.answer.count("\n- ") == 1
 
 
+def test_query_engine_summarizes_noisy_article_text(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk(
+                "nse-ipo",
+                NewsCategory.STOCKS,
+                0,
+                "NSE IPO details point to strong investor interest. "
+                "Reasons for bullishness include a large procurement pipeline. "
+                "You are logged in Loading LOGOUT View Market Dashboard.",
+            ),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Tell me more about the NSE IPO")
+
+    assert response.answer == (
+        "- NSE IPO details point to strong investor interest.\n"
+        "- Reasons for bullishness include a large procurement pipeline."
+    )
+    assert "LOGOUT" not in response.answer
+    assert "View Market Dashboard" not in response.answer
+
+
+def test_query_engine_prioritizes_sentences_relevant_to_any_query(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk(
+                "policy",
+                NewsCategory.FINANCE,
+                0,
+                "The company reported its quarterly results. "
+                "The RBI policy decision may affect interest rates and lenders.",
+            ),
+        ]
+    )
+
+    response = QueryEngine(store).answer("How will the RBI policy affect lenders?")
+
+    assert response.answer.startswith("- The RBI policy decision may affect interest rates and lenders.")
+
+
+def test_query_engine_focuses_single_article_questions(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    target = replace(
+        make_chunk("target", NewsCategory.STOCKS, 0, "Nifty 50 target could reach 25,000 this year"),
+        metadata={"title": "Nifty 50 target: Will it hit 25,000 this year?"},
+    )
+    drone = replace(
+        make_chunk("drone", NewsCategory.STOCKS, 0, "Buy Ideaforge stock for 27 percent upside"),
+        metadata={"title": "India's drone leader: Buy Ideaforge stock"},
+    )
+    store.upsert(
+        [
+            target,
+            make_chunk("crude", NewsCategory.STOCKS, 0, "Elevated crude prices pressure inflation and market sentiment"),
+            drone,
+        ]
+    )
+
+    response = QueryEngine(store).answer("What is the Nifty 50 target article about?")
+
+    assert [citation.url for citation in response.citations] == ["https://example.com/target"]
+    assert "Ideaforge" not in response.answer
+    assert "crude" not in response.answer.casefold()
+
+
 def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
