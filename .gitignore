@@ -53,3 +53,4 @@ pip-log.txt
 .idea/
 .DS_Store
 Thumbs.db
+.vercel
