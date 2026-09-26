@@ -65,13 +65,13 @@ The Vercel API uses the standard library and does not require the vector or UI e
 - Vercel production health API: deployed under the `news-rag` project.
 - Streamlit application: deployed/configured through Streamlit Community Cloud.
 
-## Recommended Completion Items
+## Remaining Operational Items
 
 1. Run the 20 evaluation questions against a populated, representative news index and record accuracy, citation, recency, and refusal scores.
-2. Move production vectors to ChromaDB, Qdrant, Pinecone, or pgvector with persistent storage.
+2. Host ChromaDB or another vector database on durable storage for production workloads.
 3. Add authenticated ingestion and query API endpoints on a Python-compatible host.
-4. Add durable scheduling, structured logs, monitoring, and source licensing review.
-5. Add hybrid retrieval and a production LLM/embedding provider only after evaluation establishes the baseline.
+4. Connect external alerting and monitoring, then complete source licensing and rate-limit review.
+5. Configure a hosted LLM and embedding provider only after the deterministic baseline has been evaluated.
 
 ## Conclusion
 

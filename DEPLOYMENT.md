@@ -50,6 +50,8 @@ Configure these values in the Vercel project settings, not in committed files:
 - `NEWS_RAG_LOG_LEVEL`
 - `NEWS_RAG_VECTOR_STORE_DIR`
 - `NEWS_RAG_VECTOR_BACKEND` (`json` for the free demo fallback, `chroma` for the optional persistent Chroma backend)
+- `NEWS_RAG_INTERVAL_SECONDS` (`86400` for daily ingestion or `3600` for hourly ingestion)
+- `NEWS_RAG_STRUCTURED_LOGS` (`1` for JSON worker logs)
 - Approved RSS URL variables for each domain
 - Provider credentials when an external LLM or embedding provider is enabled
 
