@@ -72,6 +72,12 @@ def main() -> None:
         st.divider()
         show_briefing = st.checkbox("Today's Briefing", value=True)
         st.metric("Indexed chunks", store.count())
+        if st.button("Reset indexed data", type="tertiary"):
+            store.reset()
+            st.session_state.ingestion_completed = False
+            st.session_state.rag_pipeline_completed = False
+            st.session_state.pop("briefing_ingestion_date", None)
+            st.rerun()
         ingestion_done = st.session_state.get("ingestion_completed", False)
         ingestion_color = "#198754" if ingestion_done else "#dc3545"
         ingestion_label = "Complete" if ingestion_done else "Required"
@@ -88,12 +94,12 @@ def main() -> None:
             st.markdown(
                 """
                 <style>
-                section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button {
+                section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {
                     background-color: #198754;
                     border-color: #198754;
                     color: white;
                 }
-                section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button:hover {
+                section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {
                     background-color: #157347;
                     border-color: #146c43;
                     color: white;
@@ -129,16 +135,6 @@ def main() -> None:
                     color: white;
                 }
                 section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"]:hover {
-                    background-color: #bb2d3b;
-                    border-color: #b02a37;
-                    color: white;
-                }
-                section[data-testid="stSidebar"] div[data-testid="stButton"]:nth-of-type(2) button {
-                    background-color: #dc3545;
-                    border-color: #dc3545;
-                    color: white;
-                }
-                section[data-testid="stSidebar"] div[data-testid="stButton"]:nth-of-type(2) button:hover {
                     background-color: #bb2d3b;
                     border-color: #b02a37;
                     color: white;
