@@ -162,9 +162,9 @@ def _rerank(
 
 def _term_overlap(query: str, document: str) -> float:
     stopwords = {
-        "a", "about", "after", "and", "bullet", "bullets", "did", "for", "give", "in", "is",
-        "i", "in", "latest", "me", "news", "of", "on", "overall", "points", "since",
-        "summarize", "summary", "todays",
+        "a", "about", "after", "and", "ask", "bullet", "bullets", "can", "did", "for", "give", "in", "is",
+        "i", "in", "latest", "me", "news", "of", "on", "overall", "points", "recent", "since",
+        "summarize", "summary", "tell", "todays", "you",
         "the", "today", "what", "which", "why", "should", "focus",
     }
     query_terms = {

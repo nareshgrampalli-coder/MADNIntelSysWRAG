@@ -173,6 +173,16 @@ def test_query_engine_supports_daily_focus_question(tmp_path) -> None:
     assert response.citations
 
 
+def test_query_engine_supports_natural_chat_style_recent_news_question(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert([make_chunk("finance", NewsCategory.FINANCE, 0, "RBI held the policy rate steady")])
+
+    response = QueryEngine(store).answer("Can you tell me about recent news?")
+
+    assert response.grounded is True
+    assert response.citations
+
+
 def test_query_engine_returns_bullets_for_each_category(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
