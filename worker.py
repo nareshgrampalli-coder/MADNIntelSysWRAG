@@ -28,7 +28,7 @@ def interval_seconds() -> float:
 
 def main() -> None:
     settings = Settings.from_environment()
-    configure_logging(settings.log_level)
+    configure_logging(settings.log_level, structured=os.getenv("NEWS_RAG_STRUCTURED_LOGS", "0") == "1")
     store = build_store(settings)
     scheduler = IntervalScheduler(build_pipeline(store), interval_seconds())
 

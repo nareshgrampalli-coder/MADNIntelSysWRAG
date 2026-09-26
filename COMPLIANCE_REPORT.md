@@ -32,7 +32,7 @@
 | 20-30 evaluation questions and scoring | Complete for MVP | Twenty evaluation cases, scoring utilities, and a reviewer-ready scorecard with rubric and reproducibility instructions are present. Measured scores remain blank until a representative news snapshot is captured. |
 | README and setup documentation | Complete | README, deployment guide, demo runbook, architecture diagram, and progress record are present. |
 | Working deployed app or local demo | Complete | Streamlit Community Cloud deployment is configured for `app.py`; Vercel separately hosts the health API. |
-| Production persistence and monitoring | Not complete | Streamlit Cloud local storage is ephemeral; external persistent vector storage, structured production logs, monitoring, and authenticated worker triggers remain required. |
+| Production persistence and monitoring | Partial | Chroma backend selection, durable-path configuration, structured worker logs, and a versioned health endpoint are implemented. Streamlit Cloud storage remains ephemeral, and external alerting, durable hosting, and authenticated worker triggers still require platform configuration. |
 
 ## Dependency Compliance
 
