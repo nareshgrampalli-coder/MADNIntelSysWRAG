@@ -6,9 +6,10 @@ from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
-from news_rag.query_engine import QueryEngine, QueryResponse, QueryInterpreter
+from news_rag.query_engine import QueryEngine, QueryInterpreter
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
+from news_rag.ui_helpers import apply_filters, citation_lines
 
 
 def build_store(settings: Settings) -> VectorStore:
@@ -26,23 +27,7 @@ def build_pipeline(store: VectorStore) -> NewsPipeline:
     )
 
 
-def apply_filters(question: str, category: NewsCategory | None, start_date: date | None) -> str:
-    additions: list[str] = []
-    if category:
-        additions.append(category.value)
-    if start_date:
-        additions.append(f"since {start_date.isoformat()}")
-    return f"{question} ({', '.join(additions)})" if additions else question
-
-
-def citation_lines(response: QueryResponse) -> list[str]:
-    return [
-        f"[{citation.title}]({citation.url}) - {citation.source}, {citation.published_at.date().isoformat()}"
-        for citation in response.citations
-    ]
-
-
-def build_todays_briefing(store: JsonVectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
+def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
     """Build one grounded response per domain from the last 24 hours."""
     clock = lambda: now or datetime.now(timezone.utc)
     engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock))

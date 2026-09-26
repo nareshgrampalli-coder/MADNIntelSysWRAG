@@ -13,7 +13,7 @@ py -m pytest
 ## Demo flow
 
 1. Start the UI with `streamlit run app.py`.
-2. Click **Run ingestion**. The default source list is intentionally empty until approved RSS/API URLs are configured.
+2. Click **Run ingestion**. Development defaults use one Google News RSS search per domain; configure approved RSS URLs before production use.
 3. Ask a question about Technology, Finance, or Politics news.
 4. Use the category and date filters to constrain retrieval.
 5. Expand **Sources** to inspect links and publication dates.

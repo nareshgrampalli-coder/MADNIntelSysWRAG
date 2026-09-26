@@ -38,6 +38,7 @@ The ingestion button uses one Google News RSS search per domain in development. 
 - `worker.py`: standalone scheduled ingestion worker
 - `api/health.py`: Vercel health endpoint with deployment metadata
 - `src/news_rag/query_engine.py`: date-aware retrieval, grounded answers, and citations
+- `src/news_rag/ui_helpers.py`: Streamlit filter and citation presentation helpers
 - `src/news_rag/evaluation.py`: evaluation dataset and score utilities
 - `tests/`: automated tests
 - `evaluation/questions.json`: 20-case evaluation dataset

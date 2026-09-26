@@ -28,14 +28,14 @@ Build a news analyst that collects Technology, Finance, and Politics news, proce
 
 ### Phase 3: Knowledge Base
 
-- Generate embeddings and persist chunks in ChromaDB.
+- Generate embeddings and persist chunks in the configured JSON or ChromaDB backend.
 - Store category, source, URL, publication date, entities, and ingestion time as metadata.
 - Support idempotent upserts, date/category filters, and database rebuilds.
 
 ### Phase 4: Orchestration
 
 - Implement the pipeline: `fetch -> process -> embed -> store`.
-- Support manual and scheduled runs with APScheduler.
+- Support manual and scheduled runs with the built-in interval worker.
 - Isolate agent failures, retry failed work, and record run summaries.
 
 ### Phase 5: RAG Query Engine
@@ -60,8 +60,8 @@ Build a news analyst that collects Technology, Finance, and Politics news, proce
 
 ### Phase 8: Vercel Deployment
 
-- Deploy a browser-based frontend to Vercel.
-- Host the Python API and ingestion worker separately on a Python-compatible platform.
+- Host the Streamlit UI on Streamlit Community Cloud or another Python-compatible platform.
+- Use Vercel for lightweight API functions and host the ingestion worker separately on a Python-compatible platform.
 - Configure preview and production environment variables.
 - Use Vercel Cron only for lightweight authenticated trigger requests when appropriate.
 - Keep fetching, processing, embeddings, vector storage, and long-running jobs outside Vercel serverless functions.
@@ -72,10 +72,10 @@ Build a news analyst that collects Technology, Finance, and Politics news, proce
 - Python
 - Streamlit for the first local UI
 - ChromaDB for local vector storage
-- APScheduler for scheduled ingestion
+- Built-in interval worker for scheduled ingestion
 - RSS and approved public news APIs
 - Configurable LLM and embedding providers
-- Vercel for the production web frontend
+- Vercel for lightweight API functions
 - Separate Python hosting for the API and worker
 
 ## Validation
