@@ -4,7 +4,7 @@ A date-aware news analyst for Technology, Finance, Politics, and the India-only 
 
 ## Status
 
-The MVP implementation is complete. See [PLAN.md](PLAN.md), [PROGRESS.md](PROGRESS.md), and [DEPLOYMENT.md](DEPLOYMENT.md) for the phase record and deployment instructions.
+The MVP implementation is complete. See [docs/PLAN.md](docs/PLAN.md), [docs/PROGRESS.md](docs/PROGRESS.md), and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the phase record and deployment instructions.
 
 ## Local setup
 
@@ -46,7 +46,7 @@ The ingestion button uses multiple Google News RSS searches per domain in develo
 - `src/news_rag/evaluation.py`: evaluation dataset and score utilities
 - `tests/`: automated tests
 - `evaluation/questions.json`: 20-case evaluation dataset
-- `SystemRequirements.md`: original requirements
-- `PLAN.md`: phased implementation plan
-- `PROGRESS.md`: phase completion record
-- `COMPLIANCE_REPORT.md`: requirements compliance matrix
+- `docs/SystemRequirements.md`: original requirements
+- `docs/PLAN.md`: phased implementation plan
+- `docs/PROGRESS.md`: phase completion record
+- `docs/COMPLIANCE_REPORT.md`: requirements compliance matrix

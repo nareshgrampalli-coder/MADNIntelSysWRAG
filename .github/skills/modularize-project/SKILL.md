@@ -18,6 +18,8 @@ Keep the repository root limited to files required by the package manager, frame
 
 Target outcome: the root should contain only essential top-level artifacts, with no more than the smallest practical set of configuration and entry-point files. Do not move files merely to meet a number; classify each root item first and preserve tools' expected paths unless their configuration is updated in the same change.
 
+For this repository, `README.md` is the essential root onboarding document. Architecture notes, requirements, plans, progress records, deployment guidance, demos, and compliance reports belong under `docs/`. New project documentation must not be added to the root unless a framework, package manager, deployment platform, or repository convention requires that exact path.
+
 ## Root minimization workflow
 1. Inventory root entries and classify each as essential configuration, source entry point, documentation, generated/runtime output, or misplaced domain content.
 2. Keep essential configuration and framework-required files in place.

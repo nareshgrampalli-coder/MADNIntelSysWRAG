@@ -7,4 +7,4 @@ def test_vercel_configuration_declares_api_functions() -> None:
 
     assert "api/*.py" in config["functions"]
     assert Path("api/health.py").exists()
-    assert Path("DEPLOYMENT.md").exists()
+    assert Path("docs/DEPLOYMENT.md").exists()

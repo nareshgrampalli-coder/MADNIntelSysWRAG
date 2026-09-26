@@ -41,7 +41,7 @@ description: "Use when: update design documents, refresh architecture and workfl
 ## Example
 ```bash
 # review relevant docs and design files
-find docs -name "*.md" -o -name "README.md" -o -name "PLAN.md"
+find docs -name "*.md" -o -name "README.md"
 ```
 
 ## Output expectations
