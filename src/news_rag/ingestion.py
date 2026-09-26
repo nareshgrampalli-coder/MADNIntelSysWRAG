@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 import hashlib
+from html.parser import HTMLParser
 import logging
 from time import sleep
 from urllib.request import Request, urlopen
@@ -38,7 +39,24 @@ class RssSourceAdapter:
 
     def fetch(self, source: FeedSource) -> list[RawArticle]:
         payload = self._download(source.url)
-        return parse_rss(payload, source)
+        return [self._hydrate_article(article) for article in parse_rss(payload, source)]
+
+    def _hydrate_article(self, article: RawArticle) -> RawArticle:
+        try:
+            page = self._download(article.url)
+            content = _extract_article_text(page)
+        except Exception:
+            return article
+        if not content:
+            return article
+        return RawArticle(
+            title=article.title,
+            url=article.url,
+            source=article.source,
+            published_at=article.published_at,
+            content=content,
+            category=article.category,
+        )
 
     def _download(self, url: str) -> bytes:
         request = Request(url, headers={"User-Agent": "news-rag/0.1"})
@@ -91,6 +109,31 @@ def _rss_content(item: ET.Element) -> str:
         if child.tag.rsplit("}", 1)[-1] == "encoded":
             return _text(child)
     return ""
+
+
+class _ArticleTextExtractor(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+        self._ignored_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in {"script", "style", "nav", "footer", "header", "aside", "form"}:
+            self._ignored_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"script", "style", "nav", "footer", "header", "aside", "form"} and self._ignored_depth:
+            self._ignored_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self._ignored_depth:
+            self.parts.append(data)
+
+
+def _extract_article_text(payload: bytes) -> str:
+    parser = _ArticleTextExtractor()
+    parser.feed(payload.decode("utf-8", errors="replace"))
+    return " ".join(" ".join(parser.parts).split())
 
 
 def deduplicate_articles(articles: Iterable[RawArticle]) -> list[RawArticle]:

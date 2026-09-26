@@ -140,8 +140,33 @@ def test_adapter_retries_then_returns_payload() -> None:
     source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
     articles = RssSourceAdapter(opener=opener, retries=1).fetch(source)
 
-    assert attempts == 2
+    assert attempts == 4
     assert articles[0].title == "Markets react to policy news"
+
+
+def test_adapter_fetches_article_content_from_links() -> None:
+    source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
+    html = b"<html><nav>Menu</nav><article>Full article body from the link.</article></html>"
+
+    class Response:
+        def __init__(self, payload: bytes):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return self.payload
+
+    def opener(request, timeout):
+        return Response(RSS if request.full_url.endswith("/rss") else html)
+
+    articles = RssSourceAdapter(opener=opener, retries=0).fetch(source)
+
+    assert articles[0].content == "Full article body from the link."
 
 
 def test_default_sources_exist_for_each_domain(monkeypatch) -> None:
@@ -155,16 +180,16 @@ def test_default_sources_exist_for_each_domain(monkeypatch) -> None:
         assert all(source.category is category for source in sources)
 
 
-    def test_google_news_overrides_fall_back_to_publisher_defaults(monkeypatch) -> None:
-        monkeypatch.setenv(
-            "NEWS_RAG_FINANCE_RSS_URLS",
-            "https://news.google.com/rss/search?q=finance",
-        )
+def test_google_news_overrides_fall_back_to_publisher_defaults(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "NEWS_RAG_FINANCE_RSS_URLS",
+        "https://news.google.com/rss/search?q=finance",
+    )
 
-        sources = sources_for(NewsCategory.FINANCE)
+    sources = sources_for(NewsCategory.FINANCE)
 
-        assert sources
-        assert all("news.google.com" not in source.url for source in sources)
+    assert sources
+    assert all("news.google.com" not in source.url for source in sources)
 
 
 def test_default_sources_provide_multiple_queries_per_domain() -> None:
