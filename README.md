@@ -25,6 +25,8 @@ py -m pip install -e ".[ui]"
 streamlit run app.py
 ```
 
+The ingestion button uses one Google News RSS search per domain in development. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, and `NEWS_RAG_POLITICS_RSS_URLS` in `.env` as comma-separated approved RSS URLs to replace those defaults.
+
 ## Repository structure
 
 - `app.py`: Streamlit chat interface and manual ingestion controls

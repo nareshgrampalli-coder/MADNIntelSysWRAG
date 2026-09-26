@@ -1,13 +1,13 @@
 """Streamlit user interface for the News RAG application."""
 
-from datetime import date, datetime, timezone
-from pathlib import Path
+from datetime import date
 
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine
+from news_rag.sources import sources_for
 from news_rag.vector_store import JsonVectorStore
 
 
@@ -17,7 +17,11 @@ def build_store(settings: Settings) -> JsonVectorStore:
 
 def build_pipeline(store: JsonVectorStore) -> NewsPipeline:
     return NewsPipeline(
-        fetchers=(TechnologyFetcher(), FinanceFetcher(), PoliticsFetcher()),
+        fetchers=(
+            TechnologyFetcher(sources_for(NewsCategory.TECHNOLOGY)),
+            FinanceFetcher(sources_for(NewsCategory.FINANCE)),
+            PoliticsFetcher(sources_for(NewsCategory.POLITICS)),
+        ),
         store=store,
     )
 

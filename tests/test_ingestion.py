@@ -8,6 +8,7 @@ from news_rag.ingestion import (
     parse_rss,
 )
 from news_rag.models import NewsCategory
+from news_rag.sources import sources_for
 
 
 RSS = b"""
@@ -92,3 +93,11 @@ def test_adapter_retries_then_returns_payload() -> None:
 
     assert attempts == 2
     assert articles[0].title == "Markets react to policy news"
+
+
+def test_default_sources_exist_for_each_domain() -> None:
+    for category in NewsCategory:
+        sources = sources_for(category)
+
+        assert sources
+        assert all(source.category is category for source in sources)
