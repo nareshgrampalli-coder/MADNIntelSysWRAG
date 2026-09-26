@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.query_engine import QueryEngine
+from news_rag.ui_helpers import trim_sentence
 from news_rag.vector_store import JsonVectorStore
 
 
@@ -10,6 +11,27 @@ def test_apply_filters_adds_category_and_date_constraints() -> None:
     result = apply_filters("What happened?", NewsCategory.FINANCE, date(2026, 9, 20))
 
     assert result == "What happened? (finance, since 2026-09-20)"
+
+
+def test_trim_sentence_keeps_short_lines_and_cuts_at_sentence_boundary() -> None:
+    short = "Nifty gained today"
+    long_line = "First complete sentence here. " + "Second sentence. " * 40
+
+    assert trim_sentence(short) == short
+    trimmed = trim_sentence(long_line, limit=80)
+    assert len(trimmed) <= 80
+    assert "..." not in trimmed
+    assert trimmed.endswith("sentence")
+    assert trimmed.startswith("First complete sentence here")
+
+
+def test_trim_sentence_truncates_single_long_sentence_at_word_boundary() -> None:
+    line = "word " * 100
+
+    trimmed = trim_sentence(line, limit=80)
+
+    assert len(trimmed) <= 84
+    assert trimmed.endswith("...")
 
 
 def test_citation_lines_include_source_links_and_dates() -> None:

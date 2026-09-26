@@ -62,6 +62,16 @@ def test_json_store_reset_removes_all_records(tmp_path) -> None:
     assert store.count() == 0
 
 
+def test_json_store_evicts_records_older_than_max_age(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json", max_age_days=14)
+    store.upsert([chunk("stale", NewsCategory.FINANCE, days_ago=30)])
+
+    store.upsert([chunk("fresh", NewsCategory.FINANCE)])
+
+    assert store.count() == 1
+    assert [result.chunk_id for result in store.query("policy", limit=5)] == ["fresh"]
+
+
 def test_vector_store_factory_defaults_to_json(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
     settings = Settings(vector_store_dir=tmp_path)

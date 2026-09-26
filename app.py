@@ -10,23 +10,10 @@ from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
-from news_rag.ui_helpers import apply_filters, category_label, citation_lines
+from news_rag.ui_helpers import apply_filters, category_label, citation_lines, trim_sentence
 from news_rag.app_support import build_sample_questions, build_todays_briefing
 from news_rag.briefing_view import render_todays_briefing
 from news_rag.ui_styles import apply_styles
-
-
-RAG_STAGES = (
-    "Data Ingestion",
-    "Text Chunking",
-    "Embedding Generation",
-    "Vector Database Storage",
-    "Query Processing",
-    "Similarity Search",
-    "Prompt Augmentation",
-    "Response Generation",
-)
-RAG_PIPELINE_UI_ENABLED = False
 
 
 def build_store(settings: Settings) -> VectorStore:
@@ -56,6 +43,8 @@ def main() -> None:
     store = build_store(settings)
     engine = QueryEngine(store)
     pipeline = build_pipeline(store)
+    if store.count() > 0:
+        st.session_state.setdefault("ingestion_completed", True)
 
     @st.dialog("Article details")
     def show_article_details(title: str, source: str, published_date: str, summary: str, url: str) -> None:
@@ -79,7 +68,6 @@ def main() -> None:
         if st.button("Reset Indexed chunks data", type="tertiary"):
             store.reset()
             st.session_state.ingestion_completed = False
-            st.session_state.rag_pipeline_completed = False
             st.session_state.pop("briefing_ingestion_date", None)
             st.rerun()
         ingestion_done = st.session_state.get("ingestion_completed", False)
@@ -141,55 +129,6 @@ def main() -> None:
                     + "; ".join(report.errors)
                     + f" Ingestion time: {elapsed_seconds:.1f}s."
                 )
-
-        rag_done = st.session_state.get("rag_pipeline_completed", False)
-        rag_color = "#198754" if rag_done else "#dc3545"
-        rag_label = "Complete" if rag_done else "Required"
-        if RAG_PIPELINE_UI_ENABLED:
-            st.markdown(
-                f'<div style="color:{rag_color};font-weight:700">Run RAG Pipeline: {rag_label}</div>',
-                unsafe_allow_html=True,
-            )
-        if RAG_PIPELINE_UI_ENABLED and not rag_done:
-            st.markdown(
-                """
-                <style>
-                section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"] {
-                    background-color: #dc3545;
-                    border-color: #dc3545;
-                    color: white;
-                }
-                section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"]:hover {
-                    background-color: #bb2d3b;
-                    border-color: #b02a37;
-                    color: white;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
-        if RAG_PIPELINE_UI_ENABLED and st.button("Run RAG pipeline", type="primary" if rag_done else "secondary", disabled=True):
-            with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
-                report = pipeline.run_once()
-                if report.succeeded and report.chunks_stored:
-                    pipeline_query = "Summarize latest news in 3 bullet points."
-                    pipeline_response = engine.answer(pipeline_query, relevance_threshold=0.0)
-                    st.write(f"Data Ingestion: fetched {report.articles_fetched} articles")
-                    st.write(f"Category coverage: {report.articles_by_category}")
-                    st.write(f"Text Chunking: created {report.chunks_stored} chunks")
-                    st.write("Embedding Generation: generated and indexed embeddings")
-                    st.write("Vector Database Storage: stored successfully")
-                    st.write("Query Processing: interpreted category and date filters")
-                    st.write(f"Similarity Search: retrieved {len(pipeline_response.citations)} sources")
-                    st.write("Prompt Augmentation: assembled grounded excerpts")
-                    st.write("Response Generation: generated grounded response")
-                    pipeline_status.update(label="RAG pipeline complete", state="complete")
-                else:
-                    st.write("RAG pipeline stopped: ingestion produced no usable chunks")
-                    pipeline_status.update(label="RAG pipeline failed", state="error")
-            if report.succeeded and report.chunks_stored:
-                st.session_state.ingestion_completed = True
-                st.session_state.rag_pipeline_completed = True
 
         with st.expander("Sample questions for today"):
             st.markdown("- Summarize todays news in 3 bullet points.")
@@ -280,7 +219,7 @@ def main() -> None:
             if len(answer_lines) < 3:
                 answer_lines = [part.strip() for part in response.answer.split(". ") if part.strip()]
             chat_answer = "\n".join(
-                f"- {line.rstrip('. ')[:180].rstrip()}" for line in answer_lines[:3]
+                f"- {trim_sentence(line)}" for line in answer_lines[:3]
             )
             st.markdown(chat_answer)
             if response.citations:

@@ -1,6 +1,7 @@
 """Presentation helpers shared by the Streamlit interface."""
 
 from datetime import date
+import re
 
 from .models import NewsCategory, QueryResponse
 
@@ -23,3 +24,15 @@ def citation_lines(response: QueryResponse) -> list[str]:
         f"[{citation.title}]({citation.url}) - {citation.source}, {citation.published_at.strftime('%d-%b-%Y')}"
         for citation in response.citations
     ]
+
+
+def trim_sentence(line: str, limit: int = 240) -> str:
+    """Trim a summary line at a sentence boundary when it exceeds the limit."""
+    text = line.rstrip(". ").strip()
+    if len(text) <= limit:
+        return text
+    truncated = text[: limit + 1]
+    boundary = max(truncated.rfind(". "), truncated.rfind("! "), truncated.rfind("? "))
+    if boundary > limit // 2:
+        return text[:boundary]
+    return re.sub(r"\s+\S*$", "", truncated).rstrip() + "..."

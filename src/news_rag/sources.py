@@ -8,7 +8,7 @@ from .models import NewsCategory
 
 RELEVANCE_TERMS: dict[NewsCategory, tuple[str, ...]] = {
     NewsCategory.TECHNOLOGY: ("technology", "software", "ai", "cybersecurity", "startup", "digital"),
-    NewsCategory.FINANCE: ("market", "rbi", "bank", "finance", "earnings", "stocks", "economy"),
+    NewsCategory.FINANCE: ("market", "rbi", "bank", "finance", "earnings", "economy"),
     NewsCategory.POLITICS: ("government", "minister", "election", "policy", "parliament", "politics"),
     NewsCategory.STOCKS: ("nse", "bse", "sensex", "nifty", "stocks", "shares"),
     NewsCategory.SPORTS: ("sport", "cricket", "football", "tennis", "match", "league", "player"),

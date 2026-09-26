@@ -2,8 +2,9 @@
 
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
+import os
 from pathlib import Path
 import hashlib
 import math
@@ -48,13 +49,25 @@ class HashEmbeddingProvider:
 class JsonVectorStore:
     """Small persistent vector store used for local development and tests."""
 
-    def __init__(self, path: Path, embedding_provider: HashEmbeddingProvider | None = None) -> None:
+    def __init__(
+        self,
+        path: Path,
+        embedding_provider: HashEmbeddingProvider | None = None,
+        max_age_days: int = 14,
+    ) -> None:
         self.path = path
         self.embedding_provider = embedding_provider or HashEmbeddingProvider()
+        self.max_age_days = max(1, max_age_days)
         self._records: dict[str, dict[str, object]] = {}
         self._load()
 
     def upsert(self, chunks: Iterable[ArticleChunk]) -> None:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.max_age_days)
+        self._records = {
+            key: record
+            for key, record in self._records.items()
+            if _record_published_at(record) >= cutoff
+        }
         for chunk in chunks:
             self._records[chunk.chunk_id] = {
                 "id": chunk.chunk_id,
@@ -157,15 +170,21 @@ class ChromaVectorStore:
 
 def build_vector_store(settings: object) -> VectorStore:
     """Build the configured backend, defaulting to the local JSON store."""
-    import os
-
     backend = os.getenv("NEWS_RAG_VECTOR_BACKEND", "json").casefold()
     path = settings.vector_store_dir
     if backend == "chroma":
         return ChromaVectorStore(path)
     if backend == "json":
-        return JsonVectorStore(path / "vectors.json")
+        max_age_days = int(os.getenv("NEWS_RAG_MAX_AGE_DAYS", "14"))
+        return JsonVectorStore(path / "vectors.json", max_age_days=max_age_days)
     raise ValueError("NEWS_RAG_VECTOR_BACKEND must be 'json' or 'chroma'")
+
+
+def _record_published_at(record: dict[str, object]) -> datetime:
+    try:
+        return datetime.fromisoformat(record["metadata"]["published_at"])
+    except (KeyError, TypeError, ValueError):
+        return datetime.now(timezone.utc)
 
 
 def _chunk_metadata(chunk: ArticleChunk) -> dict[str, str]:

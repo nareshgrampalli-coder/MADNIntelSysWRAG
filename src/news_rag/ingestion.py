@@ -18,6 +18,13 @@ from .models import NewsCategory, RawArticle
 logger = logging.getLogger(__name__)
 MAX_ARTICLES_PER_FEED = 3
 MAX_ARTICLES_PER_CATEGORY = 3
+NOISE_PHRASES: tuple[str, ...] = (
+    "You are logged in",
+    "Loading",
+    "LOGOUT",
+    "You don't have any Active Subscription",
+    "You do not have any Active Subscription",
+)
 
 
 @dataclass(frozen=True)
@@ -156,13 +163,7 @@ def _extract_article_text(payload: bytes) -> str:
     parser = _ArticleTextExtractor()
     parser.feed(payload.decode("utf-8", errors="replace"))
     text = " ".join(" ".join(parser.parts).split())
-    for phrase in (
-        "You are logged in",
-        "Loading",
-        "LOGOUT",
-        "You don't have any Active Subscription",
-        "You do not have any Active Subscription",
-    ):
+    for phrase in NOISE_PHRASES:
         text = re.sub(re.escape(phrase), " ", text, flags=re.IGNORECASE)
     text = re.sub(
         r"(?:Advertisement|Sponsored|Subscribe to our newsletter|Follow us on social media):?[^.]*\.?",
