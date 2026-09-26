@@ -46,6 +46,8 @@ class ExtractiveAnswerGenerator:
         if not chunks:
             return "I don't have news on that."
         excerpts = [chunk.text.rstrip(". ") + "." for chunk in chunks[:3]]
+        if "summar" in question.casefold() or "bullet" in question.casefold():
+            return "\n".join(f"- {excerpt}" for excerpt in excerpts)
         return " ".join(excerpts)
 
 
@@ -125,8 +127,8 @@ def _rerank(question: str, chunks: list[ArticleChunk], now: datetime) -> list[Ar
 
 def _term_overlap(query: str, document: str) -> float:
     stopwords = {
-        "a", "about", "after", "and", "did", "for", "in", "is", "latest", "news", "of",
-        "since", "the", "today", "what", "why",
+        "a", "about", "after", "and", "bullet", "bullets", "did", "for", "in", "is", "latest",
+        "news", "of", "points", "since", "summarize", "summary", "the", "today", "what", "why",
     }
     query_terms = {
         term for term in re.findall(r"[a-z0-9]+", query.casefold())
@@ -137,5 +139,5 @@ def _term_overlap(query: str, document: str) -> float:
         query_terms.add("stocks")
         query_terms.remove("stock")
     if not query_terms:
-        return 0.0
+        return 1.0
     return len(query_terms & document_terms) / len(query_terms)

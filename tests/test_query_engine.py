@@ -108,3 +108,19 @@ def test_query_engine_limits_stock_news_to_stocks_category(tmp_path) -> None:
 
     assert response.grounded is True
     assert response.citations[0].url.endswith("/stocks")
+
+
+def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("one", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+            make_chunk("two", NewsCategory.FINANCE, 0, "Markets reacted positively to the decision"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Summarize the news in 3 bullet points")
+
+    assert response.grounded is True
+    assert response.answer.startswith("- ")
+    assert response.answer.count("\n- ") == 1
