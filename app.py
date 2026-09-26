@@ -196,7 +196,12 @@ def main() -> None:
 
     chat_disabled = store.count() == 0
     if chat_disabled:
-        st.info("Run ingestion before asking a question.")
+        st.markdown(
+            '<span title="Click Run ingestion to load news before asking a question.">'
+            "Chat is disabled until ingestion is complete."
+            "</span>",
+            unsafe_allow_html=True,
+        )
     question = st.chat_input(
         "Run ingestion to enable questions" if chat_disabled else "Ask about recent news",
         disabled=chat_disabled,
