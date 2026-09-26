@@ -211,7 +211,7 @@ def main() -> None:
                                     citation.title,
                                     citation.source,
                                     citation.published_at.strftime("%d-%b-%Y"),
-                                    citation.summary or response.answer,
+                                    getattr(citation, "summary", "") or response.answer,
                                     citation.url,
                                 )
 
