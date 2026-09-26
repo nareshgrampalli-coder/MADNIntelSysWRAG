@@ -48,6 +48,7 @@ class SourceCitation:
     source: str
     url: str
     published_at: datetime
+    summary: str = ""
 
 
 @dataclass(frozen=True)

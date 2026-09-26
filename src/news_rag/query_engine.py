@@ -129,6 +129,7 @@ def _citations(chunks: list[ArticleChunk]) -> list[SourceCitation]:
                 source=chunk.source,
                 url=chunk.article_url,
                 published_at=chunk.published_at,
+                summary=chunk.metadata.get("summary", chunk.text),
             )
         )
     return citations

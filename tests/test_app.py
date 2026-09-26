@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 
 from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
+from news_rag.query_engine import QueryEngine
 from news_rag.vector_store import JsonVectorStore
 
 
@@ -27,6 +28,41 @@ def test_citation_lines_include_source_links_and_dates() -> None:
 
     assert citation_lines(response) == [
         "[Policy update](https://example.com/story) - Example News, 26-Sep-2026"
+    ]
+
+
+def test_citations_keep_article_specific_summaries(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="one",
+                article_url="https://example.com/one",
+                text="First article details",
+                chunk_index=0,
+                category=NewsCategory.FINANCE,
+                source="Example News",
+                published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                metadata={"title": "First", "summary": "First article summary"},
+            ),
+            ArticleChunk(
+                chunk_id="two",
+                article_url="https://example.com/two",
+                text="Second article details",
+                chunk_index=0,
+                category=NewsCategory.FINANCE,
+                source="Example News",
+                published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                metadata={"title": "Second", "summary": "Second article summary"},
+            ),
+        ]
+    )
+
+    response = QueryEngine(store).answer("finance", relevance_threshold=0.0)
+
+    assert [citation.summary for citation in response.citations] == [
+        "First article summary",
+        "Second article summary",
     ]
 
 
