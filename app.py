@@ -175,6 +175,9 @@ def main() -> None:
         with st.expander("Sample questions for today"):
             st.markdown("- Summarize todays news in 3 bullet points.")
             st.markdown("- Summarize in 3 bullet points for each category.")
+            st.markdown("- What is stock news today?")
+            st.markdown("- What happened in finance this week?")
+            st.markdown("- Which news should I focus on today?")
 
     @st.fragment
     def render_briefing() -> None:

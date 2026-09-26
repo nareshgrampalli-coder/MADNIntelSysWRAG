@@ -158,6 +158,21 @@ def test_query_engine_supports_todays_news_summary_wording(tmp_path) -> None:
     assert response.answer.count("\n- ") == 1
 
 
+def test_query_engine_supports_daily_focus_question(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("finance", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+            make_chunk("technology", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Which news should I focus on today?")
+
+    assert response.grounded is True
+    assert response.citations
+
+
 def test_query_engine_returns_bullets_for_each_category(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
