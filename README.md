@@ -36,6 +36,7 @@ The ingestion button uses one Google News RSS search per domain in development. 
 - `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
 - `src/news_rag/vector_store.py`: embeddings and persistent vector-store adapters
 - `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
+- `worker.py`: standalone scheduled ingestion worker
 - `src/news_rag/query_engine.py`: date-aware retrieval, grounded answers, and citations
 - `src/news_rag/evaluation.py`: evaluation dataset and score utilities
 - `tests/`: automated tests

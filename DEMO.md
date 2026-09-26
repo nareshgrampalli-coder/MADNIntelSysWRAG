@@ -19,6 +19,16 @@ py -m pytest
 5. Expand **Sources** to inspect links and publication dates.
 6. Ask an unanswerable question and confirm the system responds that it has no matching news.
 
+## Scheduled ingestion
+
+Run the standalone worker for daily ingestion:
+
+```powershell
+py worker.py
+```
+
+Set `NEWS_RAG_INTERVAL_SECONDS=3600` for hourly ingestion. The worker performs an immediate run, repeats at the configured interval, and stops cleanly on `Ctrl+C` or a process termination signal.
+
 ## Evaluation
 
 The 20-case evaluation set is in `evaluation/questions.json`. Use `evaluation/SCORECARD.md` to record one score from 0 to 1 for accuracy, citation correctness, recency, and refusal quality for each case, then summarize the results using `news_rag.evaluation.summarize_scores`.
