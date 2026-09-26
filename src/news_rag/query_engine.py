@@ -65,6 +65,8 @@ class QueryEngine:
         self.retrieval_limit = retrieval_limit
 
     def answer(self, question: str, relevance_threshold: float = 0.5) -> QueryResponse:
+        if _requests_each_category(question):
+            return self._answer_each_category()
         filters = self.interpreter.interpret(question)
         chunks = self.store.query(
             question,
@@ -86,6 +88,24 @@ class QueryEngine:
             citations=tuple(citations),
             grounded=True,
         )
+
+    def _answer_each_category(self) -> QueryResponse:
+        answers: list[str] = []
+        citations: list[SourceCitation] = []
+        seen_urls: set[str] = set()
+        for category in NewsCategory:
+            topic = "stock market" if category is NewsCategory.STOCKS else category.value
+            response = self.answer(f"Summarize latest {topic} news in 3 bullet points", relevance_threshold=0.0)
+            if not response.grounded:
+                continue
+            answers.append(f"**{category.value.title()}**\n{response.answer}")
+            for citation in response.citations:
+                if citation.url not in seen_urls:
+                    citations.append(citation)
+                    seen_urls.add(citation.url)
+        if not answers:
+            return QueryResponse(answer="I don't have news on that.")
+        return QueryResponse(answer="\n\n".join(answers), citations=tuple(citations), grounded=True)
 
 
 def _explicit_date(question: str) -> datetime | None:
@@ -112,6 +132,11 @@ def _citations(chunks: list[ArticleChunk]) -> list[SourceCitation]:
             )
         )
     return citations
+
+
+def _requests_each_category(question: str) -> bool:
+    normalized = question.casefold()
+    return "each categor" in normalized or "every categor" in normalized
 
 
 def _rerank(

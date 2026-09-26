@@ -142,6 +142,27 @@ def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
     assert response.answer.count("\n- ") == 2
 
 
+def test_query_engine_returns_bullets_for_each_category(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("finance", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+            make_chunk("technology", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+            make_chunk("politics", NewsCategory.POLITICS, 0, "Parliament reviewed a new public policy"),
+            make_chunk("stocks", NewsCategory.STOCKS, 0, "Indian stocks gained in the market"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("give me 3 bullets points for each category")
+
+    assert response.grounded is True
+    assert "**Finance**" in response.answer
+    assert "**Technology**" in response.answer
+    assert "**Politics**" in response.answer
+    assert "**Stocks**" in response.answer
+    assert response.answer.count("- ") == 4
+
+
 def test_query_engine_can_return_category_filtered_articles_without_topic_overlap(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert([make_chunk("rbi", NewsCategory.FINANCE, 0, "RBI held the policy rate steady")])
