@@ -82,6 +82,10 @@ def main() -> None:
             )
         else:
             st.markdown(
+                f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
                 """
                 <style>
                 section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button {
@@ -119,6 +123,16 @@ def main() -> None:
             st.markdown(
                 """
                 <style>
+                section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"] {
+                    background-color: #dc3545;
+                    border-color: #dc3545;
+                    color: white;
+                }
+                section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"]:hover {
+                    background-color: #bb2d3b;
+                    border-color: #b02a37;
+                    color: white;
+                }
                 section[data-testid="stSidebar"] div[data-testid="stButton"]:nth-of-type(2) button {
                     background-color: #dc3545;
                     border-color: #dc3545;
