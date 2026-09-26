@@ -46,10 +46,19 @@ def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> li
     clock = lambda: now or datetime.now(timezone.utc)
     engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock))
     briefing: list[tuple[NewsCategory, QueryResponse]] = []
+    seen_urls: set[str] = set()
     for category in NewsCategory:
+        if len(seen_urls) >= 6:
+            break
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
         response = engine.answer(f"latest {topic} news today")
-        briefing.append((category, response))
+        citations = tuple(
+            citation for citation in response.citations if citation.url not in seen_urls
+        )[: 6 - len(seen_urls)]
+        if not citations:
+            continue
+        seen_urls.update(citation.url for citation in citations)
+        briefing.append((category, QueryResponse(answer=response.answer, citations=citations, grounded=True)))
     return briefing
 
 
@@ -131,11 +140,10 @@ def main() -> None:
                 st.warning("Some categories could not be updated: " + "; ".join(daily_report.errors))
         st.subheader("Today's Briefing")
         briefing = build_todays_briefing(store)
+        if not briefing:
+            st.info("No indexed news is available for today.")
         for category, response in briefing:
             with st.expander(category_label(category), expanded=False):
-                if not response.grounded:
-                    st.info("No news has been indexed for today.")
-                    continue
                 columns = st.columns(min(3, max(1, len(response.citations))))
                 for index, citation in enumerate(response.citations):
                     with columns[index % len(columns)]:
