@@ -62,6 +62,50 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
     assert [category for category, _ in briefing] == [NewsCategory.FINANCE, NewsCategory.STOCKS]
 
 
+def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="stale-stocks",
+                article_url="https://example.com/stale-stocks",
+                text="Sensex and Nifty closed higher",
+                chunk_index=0,
+                category=NewsCategory.STOCKS,
+                source="Example News",
+                published_at=datetime(2026, 7, 30, tzinfo=timezone.utc),
+                metadata={"title": "Stock Market Today July 30"},
+            )
+        ]
+    )
+
+    briefing = build_todays_briefing(store, datetime(2026, 9, 6, 12, tzinfo=timezone.utc))
+
+    assert briefing == []
+
+
+def test_build_todays_briefing_uses_previous_day_when_today_is_empty(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="previous-day-stocks",
+                article_url="https://example.com/previous-day-stocks",
+                text="Sensex and Nifty closed higher",
+                chunk_index=0,
+                category=NewsCategory.STOCKS,
+                source="Example News",
+                published_at=datetime(2026, 9, 5, tzinfo=timezone.utc),
+                metadata={"title": "Stock Market Update September 5"},
+            )
+        ]
+    )
+
+    briefing = build_todays_briefing(store, datetime(2026, 9, 6, 12, tzinfo=timezone.utc))
+
+    assert [category for category, _ in briefing] == [NewsCategory.STOCKS]
+
+
 def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
