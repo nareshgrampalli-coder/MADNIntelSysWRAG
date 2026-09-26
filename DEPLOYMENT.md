@@ -39,7 +39,7 @@ Invoke-WebRequest https://<deployment>.vercel.app/api/health
 Expected response:
 
 ```json
-{"status":"ok","service":"news-rag-api"}
+{"status":"ok","service":"news-rag-api","version":"0.1.0","environment":"production","vector_backend":"json"}
 ```
 
 ## Environment configuration
@@ -63,4 +63,5 @@ Run the Streamlit UI and ingestion worker on a Python host such as Render, Railw
 - Protect ingestion trigger endpoints with authentication.
 - Keep API keys in platform secrets.
 - Add request timeouts, structured logs, and error monitoring.
+- Set `NEWS_RAG_STRUCTURED_LOGS=1` for JSON worker logs suitable for log aggregation.
 - Confirm news-source licensing and storage terms.

@@ -35,6 +35,10 @@ Phase 8 - Vercel Deployment: **complete**
 - Added the architecture diagram and demo runbook.
 - Added Vercel function configuration, API CORS headers, a health endpoint, and deployment documentation.
 - Added a deployment configuration test.
+- Added hybrid lexical/semantic retrieval with relevance and recency reranking.
+- Added source relevance rules, approved RSS URL configuration, and filtering tests.
+- Added the standalone scheduled ingestion worker with daily/hourly intervals.
+- Added Chroma query support, vector backend selection, structured worker logs, and health metadata.
 
 ## Validation
 
@@ -44,16 +48,16 @@ Phase 8 - Vercel Deployment: **complete**
 - Phase 1 tests cover RSS normalization, timezone handling, duplicate content, source failure isolation, and retry behavior.
 - Phase 2 tests cover cleaning, enrichment, provenance, chunk limits, and invalid configuration.
 - Phase 3 tests cover deterministic embeddings, persistence, idempotent upserts, metadata filters, and reset behavior.
-- ChromaDB integration remains optional because it is not installed in the current environment; the adapter is ready for environments that install the `vector` extra.
+- ChromaDB integration remains optional because it is not installed in the current environment; the adapter supports upsert, filtered query, count, and reset when the `vector` extra is installed.
 - Phase 4 tests cover end-to-end pipeline execution and partial fetcher failure handling.
 - Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
 - Phase 6 tests cover filter composition and citation rendering.
 - Today's Briefing tests cover date-aware domain summaries and citation-backed output.
-- Streamlit browser validation is pending because the optional UI dependency is not installed in the current environment.
+- Streamlit browser validation remains pending; the UI dependency is installed and the app is configured for Streamlit Community Cloud.
 - Phase 7 tests cover evaluation dataset loading, category counts, and score aggregation.
-- Deployment smoke testing remains pending until the Vercel/frontend and Python API deployment phase.
-- Local Vercel CLI smoke testing is pending because deployment credentials and a Vercel project are not configured in this environment.
+- Vercel preview and production API deployments have completed; preview health verification remains protected by deployment access controls.
+- Streamlit Community Cloud deployment is configured for `app.py`; cloud storage remains ephemeral without an external vector backend.
 
 ## Next phase
 
-Implementation phases are complete. The next operational step is to connect a Vercel project and a separate Python host, configure secrets and approved source URLs, then run the deployment smoke test.
+Implementation phases are complete. The remaining operational steps are to configure durable Chroma storage, external alerting, authenticated worker triggers, and measured evaluation scores.
