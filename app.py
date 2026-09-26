@@ -47,7 +47,8 @@ def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> li
     engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock))
     briefing: list[tuple[NewsCategory, QueryResponse]] = []
     for category in NewsCategory:
-        response = engine.answer(f"latest {category.value} news today")
+        topic = "stock market" if category is NewsCategory.STOCKS else category.value
+        response = engine.answer(f"latest {topic} news today")
         if response.grounded:
             briefing.append((category, response))
     return briefing
@@ -63,6 +64,13 @@ def main() -> None:
     store = build_store(settings)
     engine = QueryEngine(store)
     pipeline = build_pipeline(store)
+
+    @st.dialog("Article details")
+    def show_article_details(title: str, source: str, published_date: str, summary: str, url: str) -> None:
+        st.subheader(title)
+        st.caption(f"{source} | {published_date}")
+        st.write(summary)
+        st.link_button("Read full article", url)
 
     st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
     st.title("News RAG Analyst")
@@ -105,8 +113,18 @@ def main() -> None:
         for category, response in briefing:
             with st.expander(category_label(category), expanded=True):
                 st.markdown(response.answer)
-                for line in citation_lines(response):
-                    st.markdown(line)
+                for index, citation in enumerate(response.citations):
+                    with st.container(border=True):
+                        st.markdown(f"**{citation.title}**")
+                        st.caption(f"{citation.source} | {citation.published_at.strftime('%d-%b-%Y')}")
+                        if st.button("View article details", key=f"briefing-article-{category.value}-{index}"):
+                            show_article_details(
+                                citation.title,
+                                citation.source,
+                                citation.published_at.strftime("%d-%b-%Y"),
+                                response.answer,
+                                citation.url,
+                            )
 
     if "messages" not in st.session_state:
         st.session_state.messages = []

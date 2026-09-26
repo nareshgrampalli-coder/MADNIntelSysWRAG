@@ -43,13 +43,23 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
                 source="Example News",
                 published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
                 metadata={"title": "Finance update"},
-            )
+            ),
+            ArticleChunk(
+                chunk_id="stocks",
+                article_url="https://example.com/stocks",
+                text="Indian stocks gained today",
+                chunk_index=0,
+                category=NewsCategory.STOCKS,
+                source="Example News",
+                published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                metadata={"title": "Stocks update"},
+            ),
         ]
     )
 
     briefing = build_todays_briefing(store, datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
 
-    assert [category for category, _ in briefing] == [NewsCategory.FINANCE]
+    assert [category for category, _ in briefing] == [NewsCategory.FINANCE, NewsCategory.STOCKS]
 
 
 def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:
