@@ -78,6 +78,21 @@ Build a news analyst that collects Technology, Finance, Politics, and India-only
 - Vercel for lightweight API functions
 - Separate Python hosting for the API and worker
 
+## RAG Pipeline Execution
+
+The application executes and exposes the following RAG stages:
+
+1. Data Ingestion: fetch category RSS sources with retries and relevance filtering.
+2. Text Chunking: clean articles and split them into bounded provenance-preserving chunks.
+3. Embedding Generation: create deterministic local embeddings for each chunk.
+4. Vector Database Storage: persist chunks and metadata in JSON or ChromaDB.
+5. Query Processing: interpret category and date constraints from the user question.
+6. Similarity Search: retrieve and rerank relevant chunks using semantic and lexical signals.
+7. Prompt Augmentation: assemble retrieved evidence and citations for the answer context.
+8. Response Generation: return a grounded extractive answer or a no-answer response.
+
+The Streamlit sidebar provides a separate **Run RAG pipeline** action. It executes the ingestion-through-storage stages immediately and reports the query-through-response stages as ready for the next user question.
+
 ## Validation
 
 1. Run formatting, linting, type checks, and unit tests after each phase.

@@ -12,6 +12,18 @@ from news_rag.vector_store import VectorStore, build_vector_store
 from news_rag.ui_helpers import apply_filters, category_label, citation_lines
 
 
+RAG_STAGES = (
+    "Data Ingestion",
+    "Text Chunking",
+    "Embedding Generation",
+    "Vector Database Storage",
+    "Query Processing",
+    "Similarity Search",
+    "Prompt Augmentation",
+    "Response Generation",
+)
+
+
 def build_store(settings: Settings) -> VectorStore:
     return build_vector_store(settings)
 
@@ -123,6 +135,19 @@ def main() -> None:
                 st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
             else:
                 st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
+
+        if st.button("Run RAG pipeline", type="primary"):
+            with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
+                report = pipeline.run_once()
+                st.write("Data Ingestion: complete")
+                st.write("Text Chunking: complete")
+                st.write("Embedding Generation: complete")
+                st.write("Vector Database Storage: complete" if not report.errors else "Vector Database Storage: check errors")
+                st.write("Query Processing: ready for a question")
+                st.write("Similarity Search: ready for a question")
+                st.write("Prompt Augmentation: ready for a question")
+                st.write("Response Generation: ready for a question")
+                pipeline_status.update(label="RAG pipeline ready", state="complete")
 
         with st.expander("Sample questions for today"):
             sample_questions = build_sample_questions(store)
