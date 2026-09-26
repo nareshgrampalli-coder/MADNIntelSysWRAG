@@ -35,6 +35,7 @@ def test_pipeline_runs_fetch_process_and_store(tmp_path) -> None:
     assert report.succeeded
     assert report.articles_fetched == 1
     assert report.chunks_stored == 1
+    assert report.articles_by_category == {"finance": 1}
     assert store.count() == 1
 
 

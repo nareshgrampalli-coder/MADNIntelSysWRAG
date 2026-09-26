@@ -66,12 +66,16 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
         if not title or not url or not content:
             logger.warning("Skipping incomplete RSS item from %s", source.name)
             continue
+        published_at = _parse_date(_text(item.find("pubDate")))
+        if published_at is None:
+            logger.warning("Skipping article with invalid publication date from %s", source.name)
+            continue
         articles.append(
             RawArticle(
                 title=title,
                 url=url,
                 source=source.name,
-                published_at=_parse_date(_text(item.find("pubDate"))),
+                published_at=published_at,
                 content=content,
                 category=source.category,
             )
@@ -133,13 +137,13 @@ def _text(element: ET.Element | None) -> str:
     return " ".join("".join(element.itertext()).split()) if element is not None else ""
 
 
-def _parse_date(value: str) -> datetime:
+def _parse_date(value: str) -> datetime | None:
     if not value:
-        return datetime.now(timezone.utc)
+        return None
     try:
         parsed = parsedate_to_datetime(value)
     except (TypeError, ValueError):
-        return datetime.now(timezone.utc)
+        return None
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 

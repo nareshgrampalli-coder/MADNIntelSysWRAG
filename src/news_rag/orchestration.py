@@ -1,6 +1,7 @@
 """Pipeline orchestration for ingestion through vector storage."""
 
 from collections.abc import Callable, Iterable
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import logging
@@ -20,6 +21,7 @@ class RunReport:
     completed_at: datetime
     articles_fetched: int
     chunks_stored: int
+    articles_by_category: dict[str, int]
     errors: tuple[str, ...] = ()
 
     @property
@@ -55,6 +57,7 @@ class NewsPipeline:
             completed_at=completed_at,
             articles_fetched=len(articles),
             chunks_stored=len(chunks),
+            articles_by_category=dict(Counter(article.category.value for article in articles)),
             errors=tuple(errors),
         )
 

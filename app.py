@@ -114,7 +114,13 @@ def main() -> None:
             if report.succeeded:
                 st.session_state.ingestion_completed = True
             if report.succeeded:
-                st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
+                category_counts = ", ".join(
+                    f"{category}: {count}" for category, count in sorted(report.articles_by_category.items())
+                ) or "no category data"
+                st.success(
+                    f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
+                    f"By category: {category_counts}."
+                )
             else:
                 st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
 
@@ -150,6 +156,7 @@ def main() -> None:
                     pipeline_query = "Summarize latest news in 3 bullet points."
                     pipeline_response = engine.answer(pipeline_query, relevance_threshold=0.0)
                     st.write(f"Data Ingestion: fetched {report.articles_fetched} articles")
+                    st.write(f"Category coverage: {report.articles_by_category}")
                     st.write(f"Text Chunking: created {report.chunks_stored} chunks")
                     st.write("Embedding Generation: generated and indexed embeddings")
                     st.write("Vector Database Storage: stored successfully")
