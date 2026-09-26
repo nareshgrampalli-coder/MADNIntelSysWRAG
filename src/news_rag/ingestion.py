@@ -15,6 +15,8 @@ import xml.etree.ElementTree as ET
 from .models import NewsCategory, RawArticle
 
 logger = logging.getLogger(__name__)
+MAX_ARTICLES_PER_FEED = 3
+MAX_ARTICLES_PER_CATEGORY = 3
 
 
 @dataclass(frozen=True)
@@ -80,7 +82,7 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
     """Parse RSS 2.0 items, skipping malformed entries."""
     root = ET.fromstring(payload)
     articles: list[RawArticle] = []
-    for item in root.findall(".//item"):
+    for item in root.findall(".//item")[:MAX_ARTICLES_PER_FEED]:
         title = _text(item.find("title"))
         url = _text(item.find("link"))
         content = _rss_content(item) or title
@@ -166,7 +168,9 @@ class DomainFetcher:
                 articles.extend(_filter_relevant(self.adapter.fetch(source), source.relevance_terms))
             except Exception:
                 logger.exception("Failed to fetch source %s", source.name)
-        return deduplicate_articles(articles)
+        unique_articles = deduplicate_articles(articles)
+        unique_articles.sort(key=lambda article: article.published_at, reverse=True)
+        return unique_articles[:MAX_ARTICLES_PER_CATEGORY]
 
 
 class TechnologyFetcher(DomainFetcher):
