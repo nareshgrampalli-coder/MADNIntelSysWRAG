@@ -171,7 +171,25 @@ def main() -> None:
             f'<div style="color:{rag_color};font-weight:700">Run RAG Pipeline: {rag_label}</div>',
             unsafe_allow_html=True,
         )
-        if st.button("Run RAG pipeline", type="primary"):
+        if not rag_done:
+            st.markdown(
+                """
+                <style>
+                section[data-testid="stSidebar"] div[data-testid="stButton"]:nth-of-type(2) button {
+                    background-color: #dc3545;
+                    border-color: #dc3545;
+                    color: white;
+                }
+                section[data-testid="stSidebar"] div[data-testid="stButton"]:nth-of-type(2) button:hover {
+                    background-color: #bb2d3b;
+                    border-color: #b02a37;
+                    color: white;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+        if st.button("Run RAG pipeline", type="primary" if rag_done else "secondary"):
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
                 st.write("Data Ingestion: complete")
