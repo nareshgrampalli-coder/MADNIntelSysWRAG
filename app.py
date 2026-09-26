@@ -128,14 +128,30 @@ def main() -> None:
         st.divider()
         show_briefing = st.checkbox("Today's Briefing")
         st.metric("Indexed chunks", store.count())
+        ingestion_done = st.session_state.get("ingestion_completed", False)
+        ingestion_color = "#198754" if ingestion_done else "#dc3545"
+        ingestion_label = "Complete" if ingestion_done else "Required"
+        st.markdown(
+            f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
+            unsafe_allow_html=True,
+        )
         if st.button("Run ingestion", type="secondary"):
             with st.spinner("Collecting and indexing sources..."):
                 report = pipeline.run_once()
+            if report.succeeded:
+                st.session_state.ingestion_completed = True
             if report.succeeded:
                 st.success(f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles.")
             else:
                 st.warning("Ingestion completed with errors: " + "; ".join(report.errors))
 
+        rag_done = st.session_state.get("rag_pipeline_completed", False)
+        rag_color = "#198754" if rag_done else "#dc3545"
+        rag_label = "Complete" if rag_done else "Required"
+        st.markdown(
+            f'<div style="color:{rag_color};font-weight:700">Run RAG Pipeline: {rag_label}</div>',
+            unsafe_allow_html=True,
+        )
         if st.button("Run RAG pipeline", type="primary"):
             with st.status("Running RAG pipeline", expanded=True) as pipeline_status:
                 report = pipeline.run_once()
@@ -148,6 +164,9 @@ def main() -> None:
                 st.write("Prompt Augmentation: ready for a question")
                 st.write("Response Generation: ready for a question")
                 pipeline_status.update(label="RAG pipeline ready", state="complete")
+            if report.succeeded:
+                st.session_state.ingestion_completed = True
+                st.session_state.rag_pipeline_completed = True
 
         with st.expander("Sample questions for today"):
             sample_questions = build_sample_questions(store)
@@ -172,6 +191,8 @@ def main() -> None:
             with st.spinner("Updating today's category news..."):
                 daily_report = pipeline.run_once()
             st.session_state.briefing_ingestion_date = ingestion_key
+            if daily_report.succeeded:
+                st.session_state.ingestion_completed = True
             if daily_report.errors:
                 st.warning("Some categories could not be updated: " + "; ".join(daily_report.errors))
         st.subheader("Today's Briefing")
