@@ -70,7 +70,7 @@ def main() -> None:
         category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
         start_date = st.date_input("Published after", value=None)
         st.divider()
-        show_briefing = st.checkbox("Today's Briefing")
+        show_briefing = st.checkbox("Today's Briefing", value=True)
         st.metric("Indexed chunks", store.count())
         ingestion_done = st.session_state.get("ingestion_completed", False)
         ingestion_color = "#198754" if ingestion_done else "#dc3545"
