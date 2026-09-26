@@ -163,7 +163,10 @@ def main() -> None:
             if not has_questions:
                 st.info("Run ingestion to see questions from today's news.")
 
-    if show_briefing:
+    @st.fragment
+    def render_briefing() -> None:
+        if not show_briefing:
+            return
         ingestion_key = date.today().isoformat()
         if st.session_state.get("briefing_ingestion_date") != ingestion_key:
             with st.spinner("Updating today's category news..."):
@@ -191,6 +194,8 @@ def main() -> None:
                                     response.answer,
                                     citation.url,
                                 )
+
+    render_briefing()
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
