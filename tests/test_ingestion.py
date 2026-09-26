@@ -144,12 +144,27 @@ def test_adapter_retries_then_returns_payload() -> None:
     assert articles[0].title == "Markets react to policy news"
 
 
-def test_default_sources_exist_for_each_domain() -> None:
+def test_default_sources_exist_for_each_domain(monkeypatch) -> None:
+    monkeypatch.delenv("NEWS_RAG_FINANCE_RSS_URLS", raising=False)
+    monkeypatch.delenv("NEWS_RAG_FINANCE_APPROVED_RSS_URLS", raising=False)
+
     for category in NewsCategory:
         sources = sources_for(category)
 
         assert sources
         assert all(source.category is category for source in sources)
+
+
+    def test_google_news_overrides_fall_back_to_publisher_defaults(monkeypatch) -> None:
+        monkeypatch.setenv(
+            "NEWS_RAG_FINANCE_RSS_URLS",
+            "https://news.google.com/rss/search?q=finance",
+        )
+
+        sources = sources_for(NewsCategory.FINANCE)
+
+        assert sources
+        assert all("news.google.com" not in source.url for source in sources)
 
 
 def test_default_sources_provide_multiple_queries_per_domain() -> None:

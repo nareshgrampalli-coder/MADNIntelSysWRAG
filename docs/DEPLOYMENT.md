@@ -9,7 +9,7 @@ The Streamlit application runs on Streamlit Community Cloud, which has a free ti
 1. Push this repository to GitHub.
 2. Open [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
 3. Create an app for this repository, branch `main`, and file `app.py`.
-4. Add the RSS URL variables from `.env.example` under **Advanced settings > Secrets** when custom sources are needed.
+4. Add the per-domain RSS URL variables from `.env.example` under **Advanced settings > Secrets** only when custom sources are needed. Empty variables use the verified publisher defaults.
 5. Deploy and open the generated `streamlit.app` URL.
 
 The `requirements.txt` file installs the package and Streamlit automatically. The local JSON vector store is suitable for a demo; Cloud restarts can discard local data, so production use requires persistent external storage.
@@ -52,7 +52,9 @@ Configure these values in the Vercel project settings, not in committed files:
 - `NEWS_RAG_VECTOR_BACKEND` (`json` for the free demo fallback, `chroma` for the optional persistent Chroma backend)
 - `NEWS_RAG_INTERVAL_SECONDS` (`86400` for daily ingestion or `3600` for hourly ingestion)
 - `NEWS_RAG_STRUCTURED_LOGS` (`1` for JSON worker logs)
-- Approved RSS URL variables for each domain
+- `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, `NEWS_RAG_POLITICS_RSS_URLS`, and `NEWS_RAG_STOCKS_RSS_URLS` for custom comma-separated feeds
+- Matching `*_APPROVED_RSS_URLS` variables for operator-approved feeds
+- Legacy `news.google.com` URLs are ignored; remove them from existing Streamlit Secrets to use the verified publisher defaults
 - Provider credentials when an external LLM or embedding provider is enabled
 
 ## Production worker

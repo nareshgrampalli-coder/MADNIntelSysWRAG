@@ -48,7 +48,7 @@ def _configured_sources(category: NewsCategory) -> tuple[FeedSource, ...]:
     prefix = f"NEWS_RAG_{category.value.upper()}"
     configured = [url.strip() for url in os.getenv(f"{prefix}_RSS_URLS", "").split(",") if url.strip()]
     approved = [url.strip() for url in os.getenv(f"{prefix}_APPROVED_RSS_URLS", "").split(",") if url.strip()]
-    urls = approved or configured
+    urls = [url for url in (approved or configured) if "news.google.com" not in url.casefold()]
     return tuple(
         FeedSource(f"Configured {category.value.title()} Feed", url, category, RELEVANCE_TERMS[category])
         for url in urls
