@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
-from news_rag.models import NewsCategory, QueryResponse
+from news_rag.models import ArticleChunk, NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine, QueryInterpreter
 from news_rag.sources import sources_for
@@ -26,6 +26,21 @@ def build_pipeline(store: VectorStore) -> NewsPipeline:
         ),
         store=store,
     )
+
+
+def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, ...]]:
+    questions: dict[NewsCategory, tuple[str, ...]] = {}
+    for category in NewsCategory:
+        chunks = store.query(category.value, category=category, limit=4)
+        titles: list[str] = []
+        for chunk in chunks:
+            title = chunk.metadata.get("title", "").strip()
+            if title and title not in titles:
+                titles.append(title)
+        questions[category] = tuple(
+            f"What is the latest update on {title}?" for title in titles[:2]
+        )
+    return questions
 
 
 def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
@@ -54,6 +69,20 @@ def main() -> None:
     st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
     st.title("News RAG Analyst")
     st.caption("Answers are generated only from indexed, dated source material.")
+
+    with st.expander("Sample questions for today"):
+        sample_questions = build_sample_questions(store)
+        has_questions = False
+        for category in NewsCategory:
+            questions = sample_questions[category]
+            if not questions:
+                continue
+            has_questions = True
+            st.markdown(f"**{category_label(category)}**")
+            for question in questions:
+                st.markdown(f"- {question}")
+        if not has_questions:
+            st.info("Run ingestion to generate questions from today's indexed news.")
 
     with st.sidebar:
         st.header("Filters")

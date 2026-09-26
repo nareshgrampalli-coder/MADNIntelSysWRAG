@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from app import apply_filters, build_todays_briefing, citation_lines
+from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.vector_store import JsonVectorStore
 
@@ -50,3 +50,27 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
     briefing = build_todays_briefing(store, datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
 
     assert [category for category, _ in briefing] == [NewsCategory.FINANCE]
+
+
+def test_sample_questions_use_indexed_article_titles(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="stocks",
+                article_url="https://example.com/stocks",
+                text="Nifty gained after strong market activity",
+                chunk_index=0,
+                category=NewsCategory.STOCKS,
+                source="Example News",
+                published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                metadata={"title": "Nifty gains after market rally"},
+            )
+        ]
+    )
+
+    questions = build_sample_questions(store)
+
+    assert questions[NewsCategory.STOCKS] == (
+        "What is the latest update on Nifty gains after market rally?",
+    )
