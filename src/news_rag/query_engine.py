@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import re
 
 from .models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
-from .vector_store import JsonVectorStore
+from .vector_store import VectorStore
 
 
 @dataclass(frozen=True)
@@ -50,7 +50,7 @@ class ExtractiveAnswerGenerator:
 class QueryEngine:
     def __init__(
         self,
-        store: JsonVectorStore,
+        store: VectorStore,
         interpreter: QueryInterpreter | None = None,
         generator: ExtractiveAnswerGenerator | None = None,
         retrieval_limit: int = 8,

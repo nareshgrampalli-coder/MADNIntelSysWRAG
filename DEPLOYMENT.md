@@ -49,6 +49,7 @@ Configure these values in the Vercel project settings, not in committed files:
 - `NEWS_RAG_ENV`
 - `NEWS_RAG_LOG_LEVEL`
 - `NEWS_RAG_VECTOR_STORE_DIR`
+- `NEWS_RAG_VECTOR_BACKEND` (`json` for the free demo fallback, `chroma` for the optional persistent Chroma backend)
 - Approved RSS URL variables for each domain
 - Provider credentials when an external LLM or embedding provider is enabled
 

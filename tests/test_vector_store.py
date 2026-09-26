@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from news_rag.models import ArticleChunk, NewsCategory
-from news_rag.vector_store import HashEmbeddingProvider, JsonVectorStore
+from news_rag.config import Settings
+from news_rag.vector_store import HashEmbeddingProvider, JsonVectorStore, build_vector_store
 
 
 def chunk(chunk_id: str, category: NewsCategory, days_ago: int = 0) -> ArticleChunk:
@@ -59,3 +60,19 @@ def test_json_store_reset_removes_all_records(tmp_path) -> None:
     store.reset()
 
     assert store.count() == 0
+
+
+def test_vector_store_factory_defaults_to_json(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
+    settings = Settings(vector_store_dir=tmp_path)
+
+    store = build_vector_store(settings)
+
+    assert isinstance(store, JsonVectorStore)
+
+
+def test_vector_store_factory_rejects_unknown_backend(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("NEWS_RAG_VECTOR_BACKEND", "unknown")
+
+    with pytest.raises(ValueError, match="json.*chroma"):
+        build_vector_store(Settings(vector_store_dir=tmp_path))

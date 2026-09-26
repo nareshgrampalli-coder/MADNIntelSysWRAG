@@ -8,14 +8,14 @@ from news_rag.models import NewsCategory, QueryResponse
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine, QueryResponse, QueryInterpreter
 from news_rag.sources import sources_for
-from news_rag.vector_store import JsonVectorStore
+from news_rag.vector_store import VectorStore, build_vector_store
 
 
-def build_store(settings: Settings) -> JsonVectorStore:
-    return JsonVectorStore(settings.vector_store_dir / "vectors.json")
+def build_store(settings: Settings) -> VectorStore:
+    return build_vector_store(settings)
 
 
-def build_pipeline(store: JsonVectorStore) -> NewsPipeline:
+def build_pipeline(store: VectorStore) -> NewsPipeline:
     return NewsPipeline(
         fetchers=(
             TechnologyFetcher(sources_for(NewsCategory.TECHNOLOGY)),

@@ -8,8 +8,23 @@ from pathlib import Path
 import hashlib
 import math
 import re
+from typing import Protocol
 
 from .models import ArticleChunk, NewsCategory
+
+
+class VectorStore(Protocol):
+    def upsert(self, chunks: Iterable[ArticleChunk]) -> None: ...
+
+    def query(
+        self,
+        text: str,
+        category: NewsCategory | None = None,
+        published_after: datetime | None = None,
+        limit: int = 5,
+    ) -> list[ArticleChunk]: ...
+
+    def count(self) -> int: ...
 
 
 class HashEmbeddingProvider:
@@ -107,11 +122,50 @@ class ChromaVectorStore:
             metadatas=[_chunk_metadata(chunk) for chunk in chunks],
         )
 
+    def query(
+        self,
+        text: str,
+        category: NewsCategory | None = None,
+        published_after: datetime | None = None,
+        limit: int = 5,
+    ) -> list[ArticleChunk]:
+        if limit <= 0:
+            return []
+        filters = []
+        if category:
+            filters.append({"category": category.value})
+        if published_after:
+            filters.append({"published_at": {"$gte": published_after.isoformat()}})
+        kwargs: dict[str, object] = {"query_texts": [text], "n_results": limit}
+        if filters:
+            kwargs["where"] = filters[0] if len(filters) == 1 else {"$and": filters}
+        results = self.collection.query(**kwargs)
+        ids = results.get("ids", [[]])[0]
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        return [
+            _record_to_chunk({"id": record_id, "text": document, "metadata": metadata})
+            for record_id, document, metadata in zip(ids, documents, metadatas, strict=True)
+        ]
+
     def count(self) -> int:
         return self.collection.count()
 
     def reset(self) -> None:
         self.collection.delete(where={})
+
+
+def build_vector_store(settings: object) -> VectorStore:
+    """Build the configured backend, defaulting to the local JSON store."""
+    import os
+
+    backend = os.getenv("NEWS_RAG_VECTOR_BACKEND", "json").casefold()
+    path = settings.vector_store_dir
+    if backend == "chroma":
+        return ChromaVectorStore(path)
+    if backend == "json":
+        return JsonVectorStore(path / "vectors.json")
+    raise ValueError("NEWS_RAG_VECTOR_BACKEND must be 'json' or 'chroma'")
 
 
 def _chunk_metadata(chunk: ArticleChunk) -> dict[str, str]:

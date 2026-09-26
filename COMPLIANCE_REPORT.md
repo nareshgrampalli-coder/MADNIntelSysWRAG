@@ -22,7 +22,7 @@
 | Deduplication and boilerplate cleaning | Complete | URL/content-hash deduplication and deterministic HTML/boilerplate cleaning are implemented and tested. |
 | Summaries, tags, entities, and category metadata | Complete for MVP | Processing derives extractive summaries, tags, entities, and category metadata. |
 | 300-500 token/article chunks | Complete for MVP | Bounded word-based chunking is implemented with provenance preservation. |
-| Embeddings and vector database | Partial | Deterministic hash embeddings and persistent JSON storage are available by default; ChromaDB is optional and not runtime-tested in this environment. |
+| Embeddings and vector database | Complete for MVP | Deterministic local embeddings, persistent JSON storage, and a functional ChromaDB adapter with upsert, filtered query, count, and reset are available. Select the backend with `NEWS_RAG_VECTOR_BACKEND`; Chroma runtime validation remains dependent on installing the optional extra. |
 | Rich metadata filtering | Complete | Category, publication date, source, URL, entities, and ingestion metadata are stored or preserved for retrieval. |
 | Query interpretation | Complete for MVP | Category, relative date ranges, and explicit dates are supported. |
 | Hybrid search and reranking | Complete for MVP | JSON retrieval combines semantic similarity with lexical term overlap, then the query engine reranks candidates by relevance and bounded recency. A production-scale reranker remains optional. |
