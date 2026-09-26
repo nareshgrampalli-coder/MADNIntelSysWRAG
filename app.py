@@ -136,6 +136,24 @@ def main() -> None:
                 f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
                 unsafe_allow_html=True,
             )
+        else:
+            st.markdown(
+                """
+                <style>
+                section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button {
+                    background-color: #198754;
+                    border-color: #198754;
+                    color: white;
+                }
+                section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button:hover {
+                    background-color: #157347;
+                    border-color: #146c43;
+                    color: white;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
         if st.button("Run ingestion", type="primary" if ingestion_done else "secondary"):
             with st.spinner("Collecting and indexing sources..."):
                 report = pipeline.run_once()
