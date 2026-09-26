@@ -91,7 +91,7 @@ The application executes and exposes the following RAG stages:
 7. Prompt Augmentation: assemble retrieved evidence and citations for the answer context.
 8. Response Generation: return a grounded extractive answer or a no-answer response.
 
-The Streamlit sidebar provides a separate **Run RAG pipeline** action. It executes the ingestion-through-storage stages immediately and reports the query-through-response stages as ready for the next user question.
+The Streamlit sidebar provides a separate **Run RAG pipeline** action. It executes ingestion through vector storage, then runs a grounded sample query through query processing, similarity search, prompt augmentation, and response generation. The action reports actual article, chunk, and retrieved-source counts and marks the pipeline complete only when usable chunks are available.
 
 ## Validation
 

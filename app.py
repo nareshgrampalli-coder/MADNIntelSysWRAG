@@ -1,15 +1,17 @@
 """Streamlit user interface for the News RAG application."""
 
-from datetime import date, datetime, timezone
+from datetime import date
 
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, StocksFetcher, TechnologyFetcher
-from news_rag.models import ArticleChunk, NewsCategory, QueryResponse
+from news_rag.models import NewsCategory
 from news_rag.orchestration import NewsPipeline
-from news_rag.query_engine import QueryEngine, QueryInterpreter
+from news_rag.query_engine import QueryEngine
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
 from news_rag.ui_helpers import apply_filters, category_label, citation_lines
+from news_rag.app_support import build_sample_questions, build_todays_briefing
+from news_rag.ui_styles import apply_styles
 
 
 RAG_STAGES = (
@@ -40,45 +42,6 @@ def build_pipeline(store: VectorStore) -> NewsPipeline:
     )
 
 
-def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, ...]]:
-    questions: dict[NewsCategory, tuple[str, ...]] = {}
-    for category in NewsCategory:
-        chunks = store.query(category.value, category=category, limit=4)
-        titles: list[str] = []
-        for chunk in chunks:
-            title = chunk.metadata.get("title", "").strip()
-            if title and title not in titles:
-                titles.append(title)
-        questions[category] = tuple(f"What happened in {title}?" for title in titles[:3])
-    return questions
-
-
-def build_todays_briefing(store: VectorStore, now: datetime | None = None) -> list[tuple[NewsCategory, QueryResponse]]:
-    """Build one grounded response per domain from the last 24 hours."""
-    clock = lambda: now or datetime.now(timezone.utc)
-    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock), retrieval_limit=6)
-    briefing: list[tuple[NewsCategory, QueryResponse]] = []
-    seen_urls: set[str] = set()
-    for category in NewsCategory:
-        topic = "stock market" if category is NewsCategory.STOCKS else category.value
-        response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
-        citations = [citation for citation in response.citations if citation.url not in seen_urls]
-        if len(citations) < 6:
-            latest_response = engine.answer(f"latest {topic} news", relevance_threshold=0.0)
-            category_urls = {citation.url for citation in citations}
-            citations.extend(
-                citation
-                for citation in latest_response.citations
-                if citation.url not in seen_urls and citation.url not in category_urls
-            )
-        citations = tuple(citations[:6])
-        if not citations:
-            continue
-        seen_urls.update(citation.url for citation in citations)
-        briefing.append((category, QueryResponse(answer=response.answer, citations=citations, grounded=True)))
-    return briefing
-
-
 def main() -> None:
     try:
         import streamlit as st
@@ -98,26 +61,7 @@ def main() -> None:
         st.link_button("Read full article", url)
 
     st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
-    st.markdown(
-        """
-        <style>
-        @media (max-width: 640px) {
-            [data-testid="stHorizontalBlock"] {
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-            [data-testid="stHorizontalBlock"] > div {
-                width: 100% !important;
-                flex: 1 1 100% !important;
-            }
-        }
-        [data-testid="stVerticalBlockBorderWrapper"] {
-            min-height: 170px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    apply_styles(st)
     st.title("News RAG Analyst")
     st.caption("Answers are generated only from indexed, dated source material.")
 
