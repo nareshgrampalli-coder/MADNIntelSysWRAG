@@ -25,6 +25,8 @@ class QueryInterpreter:
             (candidate for candidate in NewsCategory if candidate.value in normalized),
             None,
         )
+        if category is None and re.search(r"\bstock(?:s)?\b", normalized):
+            category = NewsCategory.STOCKS
         now = self.clock()
         if "today" in normalized:
             published_after = now - timedelta(days=1)
@@ -131,6 +133,9 @@ def _term_overlap(query: str, document: str) -> float:
         if term not in stopwords and not term.isdigit()
     }
     document_terms = set(re.findall(r"[a-z0-9]+", document.casefold()))
+    if "stock" in query_terms:
+        query_terms.add("stocks")
+        query_terms.remove("stock")
     if not query_terms:
         return 0.0
     return len(query_terms & document_terms) / len(query_terms)

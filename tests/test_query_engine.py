@@ -26,6 +26,12 @@ def test_query_interpreter_extracts_category_and_relative_date() -> None:
     assert filters.published_after == now - timedelta(days=7)
 
 
+def test_query_interpreter_maps_stock_to_stocks_category() -> None:
+    filters = QueryInterpreter().interpret("What is stock news today?")
+
+    assert filters.category is NewsCategory.STOCKS
+
+
 def test_query_engine_returns_grounded_answer_and_unique_citations(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     first = make_chunk("one", NewsCategory.FINANCE, 0, "RBI announced a policy rate change")
@@ -87,3 +93,18 @@ def test_query_engine_prioritizes_support_and_resistance_evidence(tmp_path) -> N
 
     assert response.grounded is True
     assert response.citations[0].url.endswith("/support")
+
+
+def test_query_engine_limits_stock_news_to_stocks_category(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            make_chunk("politics", NewsCategory.POLITICS, 0, "Stock policy debate in parliament"),
+            make_chunk("stocks", NewsCategory.STOCKS, 0, "Indian stocks rose in today's market news"),
+        ]
+    )
+
+    response = QueryEngine(store).answer("What is stock news today?")
+
+    assert response.grounded is True
+    assert response.citations[0].url.endswith("/stocks")
