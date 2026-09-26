@@ -129,7 +129,6 @@ def main() -> None:
                 if not response.grounded:
                     st.info("No news has been indexed for today.")
                     continue
-                st.markdown(response.answer)
                 columns = st.columns(min(3, max(1, len(response.citations))))
                 for index, citation in enumerate(response.citations):
                     with columns[index % len(columns)]:
