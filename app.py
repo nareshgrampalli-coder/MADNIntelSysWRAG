@@ -17,6 +17,7 @@ from news_rag.app_support import (
     build_todays_briefing,
     verify_grounding_quality,
     verify_query_interpretation,
+    retrieval_metrics,
     verify_retrieval_quality,
 )
 from news_rag.briefing_view import render_todays_briefing
@@ -126,6 +127,7 @@ def main() -> None:
                     f"{category}: {count}" for category, count in sorted(report.articles_by_category.items())
                 ) or "no category data"
                 retrieval_coverage = verify_retrieval_quality(store)
+                retrieval_summary = retrieval_metrics(retrieval_coverage)
                 interpretation_checks = verify_query_interpretation()
                 grounding_checks = verify_grounding_quality(store)
                 coverage_counts = ", ".join(
@@ -139,6 +141,8 @@ def main() -> None:
                     f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
                     f"By category: {category_counts}. "
                     f"Retrieval check: {coverage_counts}. "
+                    f"Sources retrieved: {retrieval_summary['total_sources']}; "
+                    f"category coverage: {retrieval_summary['coverage_percent']:.1f}%. "
                     f"Query interpretation: {interpretation_passed}/{len(interpretation_checks)} checks passed. "
                     f"Grounding: {grounding_passed}/{len(grounding_checks)} checks passed. "
                     f"Ingestion time: {elapsed_seconds:.1f}s."

@@ -74,6 +74,19 @@ def verify_retrieval_quality(store: VectorStore) -> dict[NewsCategory, int]:
     return coverage
 
 
+def retrieval_metrics(coverage: dict[NewsCategory, int]) -> dict[str, float | int]:
+    """Summarize category retrieval coverage for the ingestion report."""
+    category_count = len(coverage)
+    covered_count = sum(count > 0 for count in coverage.values())
+    total_sources = sum(coverage.values())
+    return {
+        "total_sources": total_sources,
+        "covered_categories": covered_count,
+        "category_count": category_count,
+        "coverage_percent": round(covered_count / category_count * 100, 1) if category_count else 0.0,
+    }
+
+
 def verify_query_interpretation() -> dict[str, bool]:
     """Exercise category, date, and conversational query interpretation."""
     now = datetime(2026, 9, 27, 12, tzinfo=timezone.utc)

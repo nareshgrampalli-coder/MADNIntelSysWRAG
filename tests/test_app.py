@@ -4,6 +4,7 @@ from app import apply_filters, build_sample_questions, build_todays_briefing, ci
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.app_support import (
     build_contextual_question,
+    retrieval_metrics,
     verify_grounding_quality,
     verify_query_interpretation,
     verify_retrieval_quality,
@@ -147,6 +148,23 @@ def test_verify_retrieval_quality_reports_category_coverage(tmp_path) -> None:
 
     assert coverage[NewsCategory.FINANCE] > 0
     assert coverage[NewsCategory.SPORTS] == 0
+
+
+def test_retrieval_metrics_summarize_source_and_category_coverage() -> None:
+    metrics = retrieval_metrics(
+        {
+            NewsCategory.FINANCE: 2,
+            NewsCategory.STOCKS: 1,
+            NewsCategory.SPORTS: 0,
+        }
+    )
+
+    assert metrics == {
+        "total_sources": 3,
+        "covered_categories": 2,
+        "category_count": 3,
+        "coverage_percent": 66.7,
+    }
 
 
 def test_verify_query_interpretation_covers_categories_dates_and_context() -> None:
