@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import monotonic, sleep
 
 from news_rag.config import Settings
-from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, SportsFetcher, StocksFetcher, TechnologyFetcher
+from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, RssSourceAdapter, SportsFetcher, StocksFetcher, TechnologyFetcher
 from news_rag.models import NewsCategory
 from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine
@@ -28,14 +28,15 @@ def build_store(settings: Settings) -> VectorStore:
     return build_vector_store(settings)
 
 
-def build_pipeline(store: VectorStore) -> NewsPipeline:
+def build_pipeline(store: VectorStore, cache_dir=None) -> NewsPipeline:
+    adapter = RssSourceAdapter(cache_dir=cache_dir)
     return NewsPipeline(
         fetchers=(
-            TechnologyFetcher(sources_for(NewsCategory.TECHNOLOGY)),
-            FinanceFetcher(sources_for(NewsCategory.FINANCE)),
-            PoliticsFetcher(sources_for(NewsCategory.POLITICS)),
-            StocksFetcher(sources_for(NewsCategory.STOCKS)),
-            SportsFetcher(sources_for(NewsCategory.SPORTS)),
+            TechnologyFetcher(sources_for(NewsCategory.TECHNOLOGY), adapter),
+            FinanceFetcher(sources_for(NewsCategory.FINANCE), adapter),
+            PoliticsFetcher(sources_for(NewsCategory.POLITICS), adapter),
+            StocksFetcher(sources_for(NewsCategory.STOCKS), adapter),
+            SportsFetcher(sources_for(NewsCategory.SPORTS), adapter),
         ),
         store=store,
     )
@@ -50,7 +51,7 @@ def main() -> None:
     settings = Settings.from_environment()
     store = build_store(settings)
     engine = QueryEngine(store)
-    pipeline = build_pipeline(store)
+    pipeline = build_pipeline(store, settings.data_dir / "http_cache")
     if store.count() > 0:
         st.session_state.setdefault("ingestion_completed", True)
 

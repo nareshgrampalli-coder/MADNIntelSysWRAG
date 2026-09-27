@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from urllib.error import HTTPError
 
 from news_rag.ingestion import (
     FeedSource,
@@ -149,6 +150,43 @@ def test_adapter_retries_then_returns_payload() -> None:
 
     assert attempts == 4
     assert articles[0].title == "Markets react to policy news"
+
+
+def test_adapter_revalidates_cached_response_with_etag(tmp_path) -> None:
+    source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
+    calls = 0
+
+    class Headers:
+        def get(self, name):
+            return "\"v1\"" if name == "ETag" else None
+
+    class Response:
+        headers = Headers()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return RSS
+
+    def opener(request, timeout):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return Response()
+        assert request.headers["If-none-match"] == '"v1"'
+        raise HTTPError(request.full_url, 304, "Not Modified", {}, None)
+
+    adapter = RssSourceAdapter(opener=opener, retries=0, cache_dir=tmp_path)
+
+    first = adapter._download(source.url)
+    second = adapter._download(source.url)
+
+    assert first == second == RSS
+    assert calls == 2
 
 
 def test_adapter_fetches_article_content_from_links() -> None:

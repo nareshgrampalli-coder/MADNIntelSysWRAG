@@ -7,9 +7,12 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 import hashlib
 from html.parser import HTMLParser
+import json
 import logging
+from pathlib import Path
 import re
 from time import sleep
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
@@ -48,10 +51,12 @@ class RssSourceAdapter:
         opener: Callable[..., object] = urlopen,
         retries: int = 2,
         timeout_seconds: float = 15.0,
+        cache_dir: Path | None = None,
     ) -> None:
         self._opener = opener
         self._retries = max(0, retries)
         self._timeout_seconds = timeout_seconds
+        self._cache_dir = cache_dir
 
     def fetch(self, source: FeedSource) -> list[RawArticle]:
         payload = self._download(source.url)
@@ -77,18 +82,67 @@ class RssSourceAdapter:
         )
 
     def _download(self, url: str) -> bytes:
-        request = Request(url, headers={"User-Agent": "news-rag/0.1"})
+        cache_body, cache_metadata = self._read_cache(url)
+        headers = {"User-Agent": "news-rag/0.1"}
+        if cache_metadata.get("etag"):
+            headers["If-None-Match"] = cache_metadata["etag"]
+        if cache_metadata.get("last_modified"):
+            headers["If-Modified-Since"] = cache_metadata["last_modified"]
+        request = Request(url, headers=headers)
         last_error: Exception | None = None
         for attempt in range(self._retries + 1):
             try:
                 with self._opener(request, timeout=self._timeout_seconds) as response:
-                    return response.read()
+                    payload = response.read()
+                    self._write_cache(url, payload, getattr(response, "headers", {}))
+                    return payload
+            except HTTPError as error:
+                if error.code == 304 and cache_body is not None:
+                    return cache_body
+                last_error = error
+                if attempt == self._retries:
+                    break
             except Exception as error:
                 last_error = error
                 if attempt == self._retries:
                     break
                 sleep(0.2 * (attempt + 1))
         raise RuntimeError(f"Unable to fetch RSS source: {url}") from last_error
+
+    def _cache_paths(self, url: str) -> tuple[Path, Path] | None:
+        if self._cache_dir is None:
+            return None
+        key = hashlib.sha256(url.encode()).hexdigest()
+        return self._cache_dir / f"{key}.body", self._cache_dir / f"{key}.json"
+
+    def _read_cache(self, url: str) -> tuple[bytes | None, dict[str, str]]:
+        paths = self._cache_paths(url)
+        if paths is None or not paths[0].exists() or not paths[1].exists():
+            return None, {}
+        try:
+            return paths[0].read_bytes(), json.loads(paths[1].read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None, {}
+
+    def _write_cache(self, url: str, payload: bytes, headers: object) -> None:
+        paths = self._cache_paths(url)
+        if paths is None:
+            return
+        get_header = getattr(headers, "get", lambda _name: None)
+        metadata = {
+            key: value
+            for key, value in {
+                "etag": get_header("ETag"),
+                "last_modified": get_header("Last-Modified"),
+            }.items()
+            if value
+        }
+        try:
+            self._cache_dir.mkdir(parents=True, exist_ok=True)
+            paths[0].write_bytes(payload)
+            paths[1].write_text(json.dumps(metadata), encoding="utf-8")
+        except OSError:
+            logger.warning("Unable to write HTTP cache for %s", url)
 
 
 def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
