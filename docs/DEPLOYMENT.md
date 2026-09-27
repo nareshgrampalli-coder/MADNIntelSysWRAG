@@ -12,7 +12,7 @@ The Streamlit application runs on Streamlit Community Cloud, which has a free ti
 4. Add category RSS URL variables from `.env.example` under **Advanced settings > Secrets** only when custom sources are needed. Empty variables use LiveMint category feeds and Yahoo Finance for Finance; Sports is configurable with `NEWS_RAG_SPORTS_RSS_URLS` and `NEWS_RAG_SPORTS_APPROVED_RSS_URLS`.
 5. Deploy and open the generated `streamlit.app` URL.
 
-The `requirements.txt` file installs the package and Streamlit automatically. The local JSON vector store is suitable for a demo; Cloud restarts can discard local data, so production use requires persistent external storage.
+The `requirements.txt` file installs the package, its `embeddings` extra (`sentence-transformers`), and Streamlit automatically. To activate semantic embeddings, set `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers` in the Streamlit app's deployment configuration and redeploy. The model is downloaded on first use. The local JSON vector store is suitable for a demo; Cloud restarts can discard local data, so production use requires persistent external storage.
 
 ## Vercel API scaffold
 
@@ -55,7 +55,7 @@ Configure these values in the Vercel project settings, not in committed files:
 - `NEWS_RAG_<CATEGORY>_RSS_URLS` for comma-separated feed overrides across Technology, Finance, Politics, Stocks, and Sports
 - Matching `NEWS_RAG_<CATEGORY>_APPROVED_RSS_URLS` variables for operator-approved feeds; approved lists take precedence over regular overrides
 - Legacy `news.google.com` URLs are ignored; remove them from existing Streamlit Secrets to use the verified publisher defaults
-- `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers` and optional `NEWS_RAG_EMBEDDING_MODEL` enable local semantic embeddings after installing the `embeddings` extra and downloading the model on first use
+- `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers` and optional `NEWS_RAG_EMBEDDING_MODEL` enable local semantic embeddings; Streamlit Cloud installs the `embeddings` extra from `requirements.txt`, then downloads the model on first use
 - Reset and re-ingest indexed data after changing embedding provider/model. LLM provider settings remain placeholders and are not used for answer generation.
 
 ## Production worker
