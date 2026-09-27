@@ -11,7 +11,7 @@ from news_rag.query_engine import QueryEngine
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
 from news_rag.ui_helpers import apply_filters, category_label, citation_lines, trim_sentence
-from news_rag.app_support import build_sample_questions, build_todays_briefing
+from news_rag.app_support import build_sample_questions, build_todays_briefing, verify_retrieval_quality
 from news_rag.briefing_view import render_todays_briefing
 from news_rag.ui_styles import apply_styles
 
@@ -118,11 +118,20 @@ def main() -> None:
                 category_counts = ", ".join(
                     f"{category}: {count}" for category, count in sorted(report.articles_by_category.items())
                 ) or "no category data"
+                retrieval_coverage = verify_retrieval_quality(store)
+                coverage_counts = ", ".join(
+                    f"{category.value}: {count}"
+                    for category, count in retrieval_coverage.items()
+                )
+                uncovered = [category.value for category, count in retrieval_coverage.items() if count == 0]
                 st.success(
                     f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
                     f"By category: {category_counts}. "
+                    f"Retrieval check: {coverage_counts}. "
                     f"Ingestion time: {elapsed_seconds:.1f}s."
                 )
+                if uncovered:
+                    st.warning("No retrievable evidence found for: " + ", ".join(uncovered) + ".")
             else:
                 st.warning(
                     "Ingestion completed with errors: "

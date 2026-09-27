@@ -44,3 +44,14 @@ def build_todays_briefing(
         seen_urls.update(citation.url for citation in citations)
         briefing.append((category, QueryResponse(answer=response.answer, citations=citations, grounded=True)))
     return briefing
+
+
+def verify_retrieval_quality(store: VectorStore) -> dict[NewsCategory, int]:
+    """Run one category query and return the number of retrieved citations."""
+    engine = QueryEngine(store, retrieval_limit=3)
+    coverage: dict[NewsCategory, int] = {}
+    for category in NewsCategory:
+        topic = "stock market" if category is NewsCategory.STOCKS else category.value
+        response = engine.answer(f"latest {topic} news", relevance_threshold=0.0)
+        coverage[category] = len(response.citations)
+    return coverage

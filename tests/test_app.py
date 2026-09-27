@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 
 from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
+from news_rag.app_support import verify_retrieval_quality
 from news_rag.query_engine import QueryEngine
 from news_rag.ui_helpers import trim_sentence
 from news_rag.vector_store import JsonVectorStore
@@ -118,6 +119,29 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
     briefing = build_todays_briefing(store, datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
 
     assert [category for category, _ in briefing] == [NewsCategory.FINANCE, NewsCategory.STOCKS]
+
+
+def test_verify_retrieval_quality_reports_category_coverage(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="finance",
+                article_url="https://example.com/finance",
+                text="India finance markets and RBI policy update",
+                chunk_index=0,
+                category=NewsCategory.FINANCE,
+                source="Example News",
+                published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                metadata={"title": "India finance update"},
+            )
+        ]
+    )
+
+    coverage = verify_retrieval_quality(store)
+
+    assert coverage[NewsCategory.FINANCE] > 0
+    assert coverage[NewsCategory.SPORTS] == 0
 
 
 def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
