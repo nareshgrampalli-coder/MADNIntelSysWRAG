@@ -1,6 +1,6 @@
 # News RAG
 
-A date-aware news analyst for Technology, Finance, Politics, and the India-only Stocks category. The system will collect approved news sources, process and index articles, and answer questions with grounded citations.
+A date-aware news analyst for Technology, Finance, Politics, Stocks, and Sports. It collects India-relevant articles from configured RSS sources, indexes article content, and answers questions with extractive, source-grounded citations.
 
 ## Status
 
@@ -27,7 +27,9 @@ streamlit run app.py
 
 Run scheduled ingestion with `py worker.py`. Set `NEWS_RAG_INTERVAL_SECONDS=3600` for hourly runs; the default is daily. Set `NEWS_RAG_VECTOR_BACKEND=chroma` when the optional ChromaDB dependency and durable storage are available.
 
-The ingestion button uses RSS feeds from Indian Express, NDTV, The Hindu, LiveMint, and Yahoo Finance. Yahoo Finance and LiveMint support Finance coverage; LiveMint also supports Stocks. Set `NEWS_RAG_TECHNOLOGY_RSS_URLS`, `NEWS_RAG_FINANCE_RSS_URLS`, `NEWS_RAG_POLITICS_RSS_URLS`, and `NEWS_RAG_STOCKS_RSS_URLS` in `.env` as comma-separated feed URLs to replace those defaults. For production, use the matching `*_APPROVED_RSS_URLS` variables for operator-approved official feeds. Legacy `news.google.com` overrides are ignored.
+Default RSS feeds are LiveMint for Technology, Finance, Politics, Stocks, and Sports, plus Yahoo Finance for Finance. Each category can use comma-separated custom feeds through `NEWS_RAG_<CATEGORY>_RSS_URLS`; operator-approved URLs can be set with the matching `NEWS_RAG_<CATEGORY>_APPROVED_RSS_URLS` variables. Approved URLs take precedence over regular overrides. Legacy `news.google.com` overrides are ignored. Articles are filtered for category relevance and India relevance before indexing.
+
+The current answer generator is deterministic and extractive; no LLM or real semantic embedding provider is configured. The default hash embeddings support local retrieval, not semantic understanding. See [docs/IMPROVEMENT_PLAN_2026-09-27.md](docs/IMPROVEMENT_PLAN_2026-09-27.md) for planned provider work.
 
 ## Repository structure
 
@@ -39,7 +41,7 @@ The ingestion button uses RSS feeds from Indian Express, NDTV, The Hindu, LiveMi
 - `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
 - `worker.py`: standalone scheduled ingestion worker
 - `api/health.py`: Vercel health endpoint with deployment metadata
-- `src/news_rag/query_engine.py`: date-aware retrieval, grounded answers, and citations
+- `src/news_rag/query_engine.py`: date-aware retrieval, extractive grounded answers, and citations
 - `src/news_rag/app_support.py`: briefing and indexed-title sample-question preparation
 - `src/news_rag/ui_styles.py`: shared Streamlit presentation styles
 - `src/news_rag/ui_helpers.py`: Streamlit filter and citation presentation helpers

@@ -12,21 +12,21 @@ Improve ingestion freshness, retrieval relevance, answer quality, and operationa
 - [x] Reject malformed publication dates instead of silently treating them as current.
 
 ### Phase 2: Retrieval Quality
-- [ ] Replace the 32-dimensional hash embedding fallback with a real embedding provider.
+- [ ] Replace or augment the 32-dimensional hash embedding fallback with a real embedding provider.
 - [ ] Keep lexical and title-aware reranking as a fallback when the provider is unavailable.
 - [ ] Add retrieval diagnostics showing selected category, date filter, and top scores.
 - [x] Expand regression fixtures for cross-category and stale-data queries.
 
 ### Phase 3: Article Evidence
-- [ ] Fetch full article content where permitted instead of relying only on RSS snippets.
+- [x] Hydrate article content from RSS item links when pages are accessible; fall back to RSS content when hydration fails or yields no text.
 - [ ] Preserve source licensing, robots, timeout, retry, and provenance rules.
-- [ ] Reject pages that do not produce meaningful article text.
+- [ ] Improve detection/rejection of pages that yield boilerplate or insufficient article text.
 
 ### Phase 4: Answer Quality
 - [x] Keep broad queries explicitly cross-category.
-- [ ] Add a citation-aware summarization provider behind a configuration boundary.
+- [ ] Add an optional citation-aware LLM summarization provider behind a configuration boundary.
 - [x] Preserve the extractive generator as a deterministic fallback.
-- [x] Refuse unsupported forecasts, private-source requests, and evidence-free claims.
+- [x] Refuse when retrieval has no relevant evidence; forecasts are limited to what retrieved articles report.
 
 ### Phase 5: Evaluation and Operations
 - [ ] Add live-data evaluation runs with recorded retrieval and citation metrics.
@@ -36,4 +36,4 @@ Improve ingestion freshness, retrieval relevance, answer quality, and operationa
 
 ## Current implementation
 
-The locally verifiable data-quality and recovery improvements are implemented. Real embeddings, full article retrieval, live evaluation scoring, alert delivery, and durable production infrastructure remain dependent on provider and deployment choices.
+The locally verifiable data-quality and recovery improvements are implemented. Real semantic embeddings, LLM generation, live evaluation scoring, alert delivery, and durable production infrastructure remain pending provider and deployment choices.

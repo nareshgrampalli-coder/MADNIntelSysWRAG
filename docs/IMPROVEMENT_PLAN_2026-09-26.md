@@ -15,14 +15,14 @@ Status legend: `[x]` done, `[~]` in progress, `[ ]` pending.
 - [x] Consolidate boilerplate/noise phrase lists into a shared `NOISE_PHRASES` constant used by both ingestion extraction and answer cleaning.
 - [x] Make topic focusing order-independent: match chunks containing all significant query terms instead of consecutive-word phrases only.
 
-## Phase 3 — Ops and observability (pending)
+## Phase 3 — Ops and observability (partially implemented)
 
-- [ ] HTTP caching for RSS/article fetches (ETag/Last-Modified) to cut repeated ingestion latency.
-- [ ] Per-feed success/failure status in the sidebar instead of aggregate errors only.
+- [x] HTTP caching for RSS/article fetches (ETag/Last-Modified) to cut repeated ingestion latency.
+- [x] Per-feed failure details in the sidebar include feed name and URL; per-feed success status is not currently reported.
 - [ ] Optional CI smoke test probing live feed URLs (LiveMint, Yahoo) for availability.
 
 ## Phase 4 — Semantic quality and docs (pending)
 
 - [ ] Pluggable real embedding provider (e.g., sentence-transformers) behind `NEWS_RAG_EMBEDDING_PROVIDER`; hash embeddings remain the dev/test default.
-- [ ] Test coverage for `api/`, `worker.py`, and the Streamlit chat-context flow (repeated/follow-up questions).
-- [ ] Refresh README and FAQ for Sports category, LiveMint sourcing, and summarization behavior.
+- [x] Add focused test coverage for `api/`, `worker.py`, and Streamlit chat-context flow (repeated/follow-up questions).
+- [x] Refresh README and FAQ for Sports category, LiveMint sourcing, and extractive summarization behavior.

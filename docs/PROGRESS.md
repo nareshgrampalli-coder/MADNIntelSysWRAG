@@ -1,5 +1,13 @@
 # Implementation Progress
 
+## Current implementation snapshot — 2026-09-27
+
+- The app supports Technology, Finance, Politics, Stocks, and Sports. Default sources are LiveMint category feeds and Yahoo Finance for Finance; custom feed overrides are configurable per category.
+- Ingestion hydrates article pages, applies category relevance and India relevance using the title and original RSS summary, deduplicates, and returns up to three newest articles per category.
+- Retrieval uses deterministic hash embeddings plus lexical scoring/reranking. Answers are extractive and grounded in indexed chunks; no LLM or semantic embedding provider is currently wired in.
+- HTTP caching, per-feed failure details, retrieval/interpretation/grounding probes, and optional in-app scheduled ingestion are implemented.
+- Latest full test run recorded for this snapshot: 78 passed.
+
 ## Current phase
 
 Phase 8 - Vercel Deployment: **complete**
@@ -13,7 +21,7 @@ Phase 8 - Vercel Deployment: **complete**
 - Added initial pytest coverage for provenance and grounded-response defaults.
 - Added local setup and repository documentation in `README.md`.
 - Added RSS parsing, bounded retries, normalized article fields, and source metadata.
-- Added Technology, Finance, Politics, and India Stocks Market fetcher boundaries.
+- Added Technology, Finance, Politics, Stocks, and Sports fetcher boundaries.
 - Added URL/content-hash deduplication and fixture-based ingestion tests.
 - Added deterministic HTML/boilerplate cleaning.
 - Added summary, category tags, and lightweight entity extraction.

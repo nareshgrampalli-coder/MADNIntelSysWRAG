@@ -39,7 +39,7 @@ The **Run ingestion** button in the sidebar executes the full data pipeline for 
 1. **Fetch RSS feeds** — downloads the configured feeds: LiveMint (`/rss/news`, `/rss/money`, `/rss/politics`, `/rss/markets`, `/rss/sports`) plus Yahoo Finance for the Finance category.
 2. **Hydrate articles** — follows each article link from the feed and downloads the full article page, fetching up to 3 articles per feed and 3 per category concurrently.
 3. **Clean content** — extracts the article body and removes navigation, scripts, advertisements, sponsored/promotional blocks, subscription prompts, social widgets, and login/session boilerplate.
-4. **Filter for relevance** — keeps only India-specific articles whose title or content contains India, Indian cities or institutions, Indian market identifiers such as NSE, Nifty, or Sensex, or India-specific sports signals such as IPL or BCCI. Category-specific keywords are applied as well.
+4. **Filter for relevance** — applies category-specific keywords, then keeps only articles whose title or original RSS summary contains India, Indian cities or institutions, Indian market identifiers such as NSE, Nifty, or Sensex, or India-specific sports signals such as IPL or BCCI. Incidental India mentions in the hydrated article body alone do not qualify an article.
 5. **Deduplicate** — drops repeated articles by URL and by content hash.
 6. **Chunk and embed** — splits each article into bounded chunks of up to 400 words, generates embeddings, and stores each chunk with its source, category, title, URL, and publication-date metadata.
 7. **Evict stale data** — the JSON store removes chunks older than 14 days on each run (`NEWS_RAG_MAX_AGE_DAYS` is configurable).

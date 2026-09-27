@@ -7,7 +7,7 @@ Carried over from [IMPROVEMENT_PLAN_2026-09-26.md](IMPROVEMENT_PLAN_2026-09-26.m
 ## Phase 3 — Ops and observability (implemented 2026-09-26/27)
 
 - [x] HTTP caching for RSS/article fetches (ETag/Last-Modified) — implemented in `RssSourceAdapter` with `data/http_cache`.
-- [x] Per-feed success/failure status in the sidebar — `DomainFetcher.errors` reported inline per feed name/URL.
+- [x] Per-feed failure details in the sidebar — `DomainFetcher.errors` reports failures inline with feed name/URL; successes are not individually listed.
 - [x] Post-ingestion verification probes for retrieval, query interpretation, and grounding — implemented in `app_support.py`.
 - [x] Optional in-app scheduled ingestion (`NEWS_RAG_AUTO_INGEST_SECONDS`).
 - [ ] Optional CI smoke test probing live feed URLs (LiveMint, Yahoo) for availability.
@@ -15,7 +15,7 @@ Carried over from [IMPROVEMENT_PLAN_2026-09-26.md](IMPROVEMENT_PLAN_2026-09-26.m
 ## Phase 4 — Semantic quality and docs (partially pending)
 
 - [ ] Pluggable real embedding provider (e.g., sentence-transformers) behind `NEWS_RAG_EMBEDDING_PROVIDER`; hash embeddings remain the dev/test default.
-- [ ] Test coverage for `api/`, `worker.py`, and the Streamlit chat-context flow (repeated/follow-up questions).
+- [x] Add test coverage for `api/`, `worker.py`, and the Streamlit chat-context flow (repeated/follow-up questions).
 - [x] Refresh README and FAQ for Sports category, LiveMint sourcing, and summarization behavior.
 
 ## Phase 5 — LLM-assisted retrieval and generation (pending)

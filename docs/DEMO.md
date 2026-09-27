@@ -13,8 +13,8 @@ py -m pytest
 ## Demo flow
 
 1. Start the UI with `streamlit run app.py`.
-2. Click **Run ingestion**. Development defaults use publisher RSS feeds from Indian Express, NDTV, The Hindu, LiveMint, and Yahoo Finance; configure approved RSS URLs before production use.
-3. Ask a question about Technology, Finance, or Politics news.
+2. Click **Run ingestion**. Defaults use LiveMint feeds for all five categories and Yahoo Finance for Finance. Configure category-specific approved RSS URLs before production use.
+3. Ask a question about Technology, Finance, Politics, Stocks, or Sports news. Answers use extractive sentence selection from indexed article chunks; no LLM is currently configured.
 4. Use the category and date filters to constrain retrieval.
 5. Expand **Sources** to inspect links and publication dates.
 6. Ask an unanswerable question and confirm the system responds that it has no matching news.

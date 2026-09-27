@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a news analyst that collects Technology, Finance, Politics, and India-only Stocks Market news, processes it into a dated knowledge base, and answers questions with grounded citations.
+Build a news analyst that collects India-relevant Technology, Finance, Politics, Stocks, and Sports news, processes it into a dated knowledge base, and answers questions with grounded citations.
 
 ## Phases
 
@@ -23,7 +23,7 @@ Build a news analyst that collects Technology, Finance, Politics, and India-only
 
 - Clean article text and remove boilerplate.
 - Generate summaries, tags, and entities.
-- Split content into approximately 300-500 token chunks.
+- Split content into chunks of up to 400 words.
 - Preserve source and date provenance throughout the pipeline.
 
 ### Phase 3: Knowledge Base
@@ -80,18 +80,18 @@ Build a news analyst that collects Technology, Finance, Politics, and India-only
 
 ## RAG Pipeline Execution
 
-The application executes and exposes the following RAG stages:
+The implemented pipeline covers ingestion through vector storage; each chat question runs query interpretation, retrieval/reranking, and extractive answer generation:
 
 1. Data Ingestion: fetch category RSS sources with retries and relevance filtering.
 2. Text Chunking: clean articles and split them into bounded provenance-preserving chunks.
-3. Embedding Generation: create deterministic local embeddings for each chunk.
+3. Embedding Generation: create deterministic local hash embeddings for each chunk (not semantic model embeddings).
 4. Vector Database Storage: persist chunks and metadata in JSON or ChromaDB.
 5. Query Processing: interpret category and date constraints from the user question.
-6. Similarity Search: retrieve and rerank relevant chunks using semantic and lexical signals.
-7. Prompt Augmentation: assemble retrieved evidence and citations for the answer context.
-8. Response Generation: return a grounded extractive answer or a no-answer response.
+6. Similarity Search: retrieve and rerank relevant chunks using hash-vector and lexical signals.
+7. Evidence Selection: select article chunks as answer evidence; there is no separate prompt-augmentation service.
+8. Response Generation: return an extractive grounded answer or a no-answer response; no LLM is currently configured.
 
-The Streamlit sidebar provides a separate **Run RAG pipeline** action. It executes ingestion through vector storage, then runs a grounded sample query through query processing, similarity search, prompt augmentation, and response generation. The action reports actual article, chunk, and retrieved-source counts and marks the pipeline complete only when usable chunks are available.
+The Streamlit sidebar provides manual ingestion, optional timed ingestion through `NEWS_RAG_AUTO_INGEST_SECONDS`, and post-ingestion retrieval/interpretation/grounding verification. It does not expose a separate **Run RAG pipeline** action.
 
 ## Validation
 
