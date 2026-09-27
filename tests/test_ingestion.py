@@ -113,6 +113,38 @@ def test_domain_fetcher_applies_source_relevance_terms() -> None:
     assert len(fetcher.fetch()) == 1
 
 
+def test_domain_fetcher_fills_three_article_category_quota_across_feeds() -> None:
+    sources = (
+        FeedSource("Finance one", "https://example.com/one", NewsCategory.FINANCE),
+        FeedSource("Finance two", "https://example.com/two", NewsCategory.FINANCE),
+    )
+
+    class FakeAdapter:
+        def fetch(self, source: FeedSource):
+            offset = 0 if source.name == "Finance one" else 2
+            return [
+                RawArticle(
+                    title=f"India finance story {index}",
+                    url=f"https://example.com/{index}",
+                    source=source.name,
+                    published_at=datetime(2026, 9, 26, index, tzinfo=timezone.utc),
+                    content=f"Indian markets and finance update {index}.",
+                    category=source.category,
+                    summary="Indian finance update.",
+                )
+                for index in range(offset + 1, offset + 3)
+            ]
+
+    articles = FinanceFetcher(sources=sources, adapter=FakeAdapter()).fetch()
+
+    assert len(articles) == 3
+    assert [article.title for article in articles] == [
+        "India finance story 4",
+        "India finance story 3",
+        "India finance story 2",
+    ]
+
+
 def test_domain_fetcher_rejects_foreign_story_with_incidental_india_body_text() -> None:
     source = FeedSource("News", "https://example.com/rss", NewsCategory.FINANCE)
 
