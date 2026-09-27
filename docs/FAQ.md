@@ -62,8 +62,8 @@ A complete RAG pipeline has eight stages. **Run ingestion** performs stages 1–
 | 4 | Vector Database Storage (persist with metadata) | Yes | On button click |
 | 5 | Query Processing (interpret category/date filters) | Verification probe | Per user question |
 | 6 | Similarity Search (retrieve relevant chunks) | Verification probe | Per user question |
-| 7 | Prompt Augmentation (assemble grounded evidence) | Verification probe | Per user question |
-| 8 | Response Generation (summarized, cited answer) | Grounding probe | Per user question |
+| 7 | Evidence Selection (pass retrieved chunks to the extractive generator) | Verification probe | Per user question |
+| 8 | Response Generation (extract relevant sentences or refuse without evidence) | Grounding probe | Per user question |
 
 ## What does Run Ingestion verify?
 

@@ -84,12 +84,12 @@ The implemented pipeline covers ingestion through vector storage; each chat ques
 
 1. Data Ingestion: fetch category RSS sources with retries and relevance filtering.
 2. Text Chunking: clean articles and split them into bounded provenance-preserving chunks.
-3. Embedding Generation: create deterministic local hash embeddings for each chunk (not semantic model embeddings).
+3. Embedding Generation: use the configured embedding provider. Sentence-transformers is the default; deterministic local hash embeddings are the dependency-free fallback.
 4. Vector Database Storage: persist chunks and metadata in JSON or ChromaDB.
 5. Query Processing: interpret category and date constraints from the user question.
-6. Similarity Search: retrieve and rerank relevant chunks using hash-vector and lexical signals.
-7. Evidence Selection: select article chunks as answer evidence; there is no separate prompt-augmentation service.
-8. Response Generation: return an extractive grounded answer or a no-answer response; no LLM is currently configured.
+6. Similarity Search: retrieve and rerank relevant chunks using vector similarity, lexical overlap, and recency.
+7. Evidence Selection: pass retrieved chunks directly to the extractive answer generator; there is no separate prompt-augmentation service.
+8. Response Generation: return selected extractive sentences grounded in retrieved chunks, or a no-answer response when evidence is insufficient; no LLM is currently configured.
 
 The Streamlit sidebar provides manual ingestion, optional timed ingestion through `NEWS_RAG_AUTO_INGEST_SECONDS`, and post-ingestion retrieval/interpretation/grounding verification. It does not expose a separate **Run RAG pipeline** action.
 

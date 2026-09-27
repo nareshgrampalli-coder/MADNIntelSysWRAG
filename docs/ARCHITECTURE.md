@@ -5,7 +5,7 @@ flowchart TD
     S[Worker, optional in-app schedule, or manual trigger] --> F[Technology / Finance / Politics / Stocks / Sports fetchers]
     F --> P[Cleaning and enrichment]
     P --> C[Up to 400-word chunks with provenance]
-    C --> E[Hash default or optional sentence-transformers]
+    C --> E[Sentence-transformers default / hash fallback]
     E --> V[(ChromaDB or local JSON vector store)]
     U[Streamlit chat] --> Q[Date/category query interpreter]
     Q --> V
