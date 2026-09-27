@@ -7,6 +7,23 @@ from .query_engine import QueryEngine, QueryInterpreter
 from .vector_store import VectorStore
 
 
+def build_contextual_question(messages: list[dict[str, str]], question: str) -> str:
+    """Keep follow-ups tied to the prior user question without accumulating history."""
+    user_questions = [
+        message["content"].strip().casefold()
+        for message in messages[-6:]
+        if message["role"] == "user"
+    ]
+    normalized_question = question.strip().casefold()
+    if normalized_question in user_questions:
+        return question
+    previous_question = next(
+        (message["content"].strip() for message in reversed(messages) if message["role"] == "user"),
+        "",
+    )
+    return question if not previous_question else f"{previous_question} {question}"
+
+
 def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, ...]]:
     """Build distinct questions from indexed article titles."""
     questions: dict[NewsCategory, tuple[str, ...]] = {}
@@ -55,3 +72,20 @@ def verify_retrieval_quality(store: VectorStore) -> dict[NewsCategory, int]:
         response = engine.answer(f"latest {topic} news", relevance_threshold=0.0)
         coverage[category] = len(response.citations)
     return coverage
+
+
+def verify_query_interpretation() -> dict[str, bool]:
+    """Exercise category, date, and conversational query interpretation."""
+    now = datetime(2026, 9, 27, 12, tzinfo=timezone.utc)
+    interpreter = QueryInterpreter(clock=lambda: now)
+    checks: dict[str, bool] = {}
+    for category in NewsCategory:
+        filters = interpreter.interpret(f"latest {category.value} news")
+        checks[f"category:{category.value}"] = filters.category is category
+    today = interpreter.interpret("latest news today")
+    checks["date:today"] = today.published_after == datetime(2026, 9, 27, tzinfo=timezone.utc)
+    follow_up = interpreter.interpret("what are the risks?")
+    checks["follow-up:neutral"] = follow_up.category is None and follow_up.published_after is None
+    repeated = interpreter.interpret("latest finance news")
+    checks["repeated:stable"] = repeated.category is NewsCategory.FINANCE
+    return checks

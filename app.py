@@ -11,7 +11,13 @@ from news_rag.query_engine import QueryEngine
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
 from news_rag.ui_helpers import apply_filters, category_label, citation_lines, trim_sentence
-from news_rag.app_support import build_sample_questions, build_todays_briefing, verify_retrieval_quality
+from news_rag.app_support import (
+    build_sample_questions,
+    build_contextual_question,
+    build_todays_briefing,
+    verify_query_interpretation,
+    verify_retrieval_quality,
+)
 from news_rag.briefing_view import render_todays_briefing
 from news_rag.ui_styles import apply_styles
 
@@ -119,19 +125,24 @@ def main() -> None:
                     f"{category}: {count}" for category, count in sorted(report.articles_by_category.items())
                 ) or "no category data"
                 retrieval_coverage = verify_retrieval_quality(store)
+                interpretation_checks = verify_query_interpretation()
                 coverage_counts = ", ".join(
                     f"{category.value}: {count}"
                     for category, count in retrieval_coverage.items()
                 )
                 uncovered = [category.value for category, count in retrieval_coverage.items() if count == 0]
+                interpretation_passed = sum(interpretation_checks.values())
                 st.success(
                     f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
                     f"By category: {category_counts}. "
                     f"Retrieval check: {coverage_counts}. "
+                    f"Query interpretation: {interpretation_passed}/{len(interpretation_checks)} checks passed. "
                     f"Ingestion time: {elapsed_seconds:.1f}s."
                 )
                 if uncovered:
                     st.warning("No retrievable evidence found for: " + ", ".join(uncovered) + ".")
+                if interpretation_passed < len(interpretation_checks):
+                    st.warning("One or more query interpretation checks failed.")
             else:
                 st.warning(
                     "Ingestion completed with errors: "
@@ -195,24 +206,7 @@ def main() -> None:
             (candidate for candidate in NewsCategory if category_label(candidate) == category_value),
             None,
         )
-        prior_questions = [
-            message["content"].strip().casefold()
-            for message in st.session_state.messages[-6:]
-            if message["role"] == "user"
-        ]
-        normalized_question = question.strip().casefold()
-        has_repeated_question = normalized_question in prior_questions
-        previous_question = next(
-            (
-                message["content"].strip()
-                for message in reversed(st.session_state.messages)
-                if message["role"] == "user"
-            ),
-            "",
-        )
-        contextual_question = (
-            question if has_repeated_question or not previous_question else f"{previous_question} {question}"
-        )
+        contextual_question = build_contextual_question(st.session_state.messages, question)
         effective_question = apply_filters(contextual_question, category, start_date)
         st.session_state.messages.append({"role": "user", "content": question})
         with st.chat_message("user"):

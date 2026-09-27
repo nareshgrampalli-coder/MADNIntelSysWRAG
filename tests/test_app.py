@@ -2,7 +2,11 @@ from datetime import date, datetime, timezone
 
 from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
-from news_rag.app_support import verify_retrieval_quality
+from news_rag.app_support import (
+    build_contextual_question,
+    verify_query_interpretation,
+    verify_retrieval_quality,
+)
 from news_rag.query_engine import QueryEngine
 from news_rag.ui_helpers import trim_sentence
 from news_rag.vector_store import JsonVectorStore
@@ -142,6 +146,22 @@ def test_verify_retrieval_quality_reports_category_coverage(tmp_path) -> None:
 
     assert coverage[NewsCategory.FINANCE] > 0
     assert coverage[NewsCategory.SPORTS] == 0
+
+
+def test_verify_query_interpretation_covers_categories_dates_and_context() -> None:
+    checks = verify_query_interpretation()
+
+    assert len(checks) == len(NewsCategory) + 3
+    assert all(checks.values())
+
+
+def test_build_contextual_question_handles_followups_and_repeats() -> None:
+    messages = [{"role": "user", "content": "What is the Nifty 50 target?"}]
+
+    assert build_contextual_question(messages, "What are the risks?") == (
+        "What is the Nifty 50 target? What are the risks?"
+    )
+    assert build_contextual_question(messages, "What is the Nifty 50 target?") == messages[0]["content"]
 
 
 def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
