@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Iterable
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import logging
@@ -34,19 +35,38 @@ class NewsPipeline:
         self.fetchers = tuple(fetchers)
         self.store = store
 
-    def run_once(self) -> RunReport:
+    def run_once(self, on_progress: Callable[[str], None] | None = None) -> RunReport:
         started_at = datetime.now(timezone.utc)
         articles = []
         errors: list[str] = []
-        for fetcher in self.fetchers:
-            try:
-                articles.extend(fetcher.fetch())
-                errors.extend(getattr(fetcher, "errors", ()))
-            except Exception as error:
-                name = fetcher.__class__.__name__
-                logger.exception("Fetcher failed: %s", name)
-                errors.append(f"{name}: {error}")
+
+        def fetch(fetcher: DomainFetcher):
+            sources = getattr(fetcher, "sources", ())
+            label = sources[0].category.value.title() if sources else fetcher.__class__.__name__
+            if on_progress:
+                on_progress(f"Scanning {label} news feeds...")
+            return fetcher.fetch(), label
+
+        with ThreadPoolExecutor(max_workers=max(1, len(self.fetchers))) as executor:
+            futures = {executor.submit(fetch, fetcher): fetcher for fetcher in self.fetchers}
+            for future in as_completed(futures):
+                fetcher = futures[future]
+                try:
+                    fetched, label = future.result()
+                    articles.extend(fetched)
+                    errors.extend(getattr(fetcher, "errors", ()))
+                    if on_progress:
+                        on_progress(f"{label}: collected {len(fetched)} relevant stories.")
+                except Exception as error:
+                    name = fetcher.__class__.__name__
+                    logger.exception("Fetcher failed: %s", name)
+                    errors.append(f"{name}: {error}")
+
+        if on_progress:
+            on_progress(f"Cleaning and chunking {len(articles)} stories...")
         chunks = process_and_chunk(articles)
+        if on_progress:
+            on_progress(f"Embedding and indexing {len(chunks)} searchable chunks...")
         try:
             self.store.upsert(chunks)
         except Exception as error:

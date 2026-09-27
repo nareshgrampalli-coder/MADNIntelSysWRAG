@@ -222,7 +222,7 @@ def test_adapter_retries_then_returns_payload() -> None:
     source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
     articles = RssSourceAdapter(opener=opener, retries=1).fetch(source)
 
-    assert attempts == 4
+    assert attempts == 3
     assert articles[0].title == "Markets react to policy news"
 
 

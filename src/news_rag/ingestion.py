@@ -60,9 +60,16 @@ class RssSourceAdapter:
 
     def fetch(self, source: FeedSource) -> list[RawArticle]:
         payload = self._download(source.url)
-        articles = parse_rss(payload, source)
-        with ThreadPoolExecutor(max_workers=min(8, max(1, len(articles)))) as executor:
-            return list(executor.map(self._hydrate_article, articles))
+        candidates = _filter_india_relevant(parse_rss(payload, source))
+        relevant_articles: list[RawArticle] = []
+        for start in range(0, len(candidates), MAX_ARTICLES_PER_CATEGORY):
+            batch = candidates[start : start + MAX_ARTICLES_PER_CATEGORY]
+            with ThreadPoolExecutor(max_workers=len(batch)) as executor:
+                hydrated = list(executor.map(self._hydrate_article, batch))
+            relevant_articles.extend(_filter_relevant(hydrated, source.relevance_terms))
+            if len(relevant_articles) >= MAX_ARTICLES_PER_CATEGORY:
+                break
+        return relevant_articles[:MAX_ARTICLES_PER_CATEGORY]
 
     def _hydrate_article(self, article: RawArticle) -> RawArticle:
         try:

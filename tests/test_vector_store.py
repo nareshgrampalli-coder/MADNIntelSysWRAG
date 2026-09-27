@@ -143,10 +143,10 @@ def test_sentence_transformer_provider_normalizes_model_output(monkeypatch) -> N
             assert model_name == "test/model"
             loaded_models.append(model_name)
 
-        def encode(self, text: str, normalize_embeddings: bool):
-            assert text == "news query"
+        def encode(self, texts: list[str], normalize_embeddings: bool):
+            assert texts == ["news query"]
             assert normalize_embeddings is True
-            return [0.6, 0.8]
+            return [[0.6, 0.8]]
 
     fake_module = ModuleType("sentence_transformers")
     fake_module.SentenceTransformer = FakeModel

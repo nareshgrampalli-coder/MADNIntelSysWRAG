@@ -30,13 +30,19 @@ def article() -> RawArticle:
 
 def test_pipeline_runs_fetch_process_and_store(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
-    report = NewsPipeline([FakeFetcher([article()])], store).run_once()
+    progress: list[str] = []
+    report = NewsPipeline([FakeFetcher([article()])], store).run_once(progress.append)
 
     assert report.succeeded
     assert report.articles_fetched == 1
     assert report.chunks_stored == 1
     assert report.articles_by_category == {"finance": 1}
     assert store.count() == 1
+    assert any("Scanning" in message for message in progress)
+    assert progress[-2:] == [
+        "Cleaning and chunking 1 stories...",
+        "Embedding and indexing 1 searchable chunks...",
+    ]
 
 
 def test_pipeline_isolates_fetcher_failures(tmp_path) -> None:

@@ -36,6 +36,8 @@ class EmbeddingProvider(Protocol):
 
     def embed(self, text: str) -> list[float]: ...
 
+    def embed_many(self, texts: list[str]) -> list[list[float]]: ...
+
 
 EMBEDDING_FALLBACK_MESSAGE = (
     "sentence-transformers is unavailable, so the app is using HashEmbeddingProvider. "
@@ -72,6 +74,9 @@ class HashEmbeddingProvider:
         magnitude = math.sqrt(sum(value * value for value in vector))
         return [value / magnitude for value in vector] if magnitude else vector
 
+    def embed_many(self, texts: list[str]) -> list[list[float]]:
+        return [self.embed(text) for text in texts]
+
 
 class SentenceTransformerEmbeddingProvider:
     """Optional local sentence-transformers embeddings."""
@@ -90,12 +95,17 @@ class SentenceTransformerEmbeddingProvider:
         return f"sentence-transformers:{self.model_name}"
 
     def embed(self, text: str) -> list[float]:
+        return self.embed_many([text])[0]
+
+    def embed_many(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
         if self.model is None:
             self.model = _load_sentence_transformer(self.model_name)
-        vector = self.model.encode(text, normalize_embeddings=True)
-        if hasattr(vector, "tolist"):
-            vector = vector.tolist()
-        return [float(value) for value in vector]
+        vectors = self.model.encode(texts, normalize_embeddings=True)
+        if hasattr(vectors, "tolist"):
+            vectors = vectors.tolist()
+        return [[float(value) for value in vector] for vector in vectors]
 
 
 class JsonVectorStore:
@@ -114,6 +124,7 @@ class JsonVectorStore:
         self._load()
 
     def upsert(self, chunks: Iterable[ArticleChunk]) -> None:
+        chunks = list(chunks)
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.max_age_days)
         self._records = {
             key: record
@@ -121,11 +132,14 @@ class JsonVectorStore:
             if _record_published_at(record) >= cutoff
         }
         self._validate_embedding_compatibility()
-        for chunk in chunks:
+        embeddings = self.embedding_provider.embed_many(
+            [_chunk_search_text(chunk) for chunk in chunks]
+        )
+        for chunk, embedding in zip(chunks, embeddings, strict=True):
             self._records[chunk.chunk_id] = {
                 "id": chunk.chunk_id,
                 "text": chunk.text,
-                "embedding": self.embedding_provider.embed(_chunk_search_text(chunk)),
+                "embedding": embedding,
                 "embedding_provider": self.embedding_provider.provider_id,
                 "metadata": _chunk_metadata(chunk),
             }
@@ -203,10 +217,13 @@ class ChromaVectorStore:
     def upsert(self, chunks: Iterable[ArticleChunk]) -> None:
         chunks = list(chunks)
         self._validate_embedding_compatibility()
+        embeddings = self.embedding_provider.embed_many(
+            [_chunk_search_text(chunk) for chunk in chunks]
+        )
         self.collection.upsert(
             ids=[chunk.chunk_id for chunk in chunks],
             documents=[chunk.text for chunk in chunks],
-            embeddings=[self.embedding_provider.embed(_chunk_search_text(chunk)) for chunk in chunks],
+            embeddings=embeddings,
             metadatas=[
                 {**_chunk_metadata(chunk), "_embedding_provider": self.embedding_provider.provider_id}
                 for chunk in chunks

@@ -1,8 +1,10 @@
 """Streamlit user interface for the News RAG application."""
 
 from concurrent.futures import ThreadPoolExecutor
+from itertools import cycle
 import os
-from time import monotonic, sleep
+from queue import Empty, Queue
+from time import monotonic
 
 from news_rag.config import Settings
 from news_rag.ingestion import FinanceFetcher, PoliticsFetcher, RssSourceAdapter, SportsFetcher, StocksFetcher, TechnologyFetcher
@@ -144,17 +146,26 @@ def main() -> None:
                 unsafe_allow_html=True,
             )
         if st.button("Run ingestion", type="primary" if ingestion_done else "secondary"):
-            countdown = st.empty()
             started = monotonic()
+            progress_messages: Queue[str] = Queue()
+            idle_messages = cycle((
+                "Checking the latest headlines for India relevance...",
+                "Gathering article text from matching stories...",
+                "Preparing news from all categories for indexing...",
+                "Building searchable citations from the selected stories...",
+            ))
             with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(pipeline.run_once)
-                while not future.done():
-                    remaining = max(0, 90 - int(monotonic() - started))
-                    countdown.info(f"Collecting and indexing sources... approximately {remaining}s remaining")
-                    sleep(1)
-                report = future.result()
+                future = executor.submit(pipeline.run_once, progress_messages.put)
+                with st.status("Starting the news harvest...", expanded=True) as status:
+                    while not future.done():
+                        try:
+                            message = progress_messages.get(timeout=1)
+                        except Empty:
+                            message = next(idle_messages)
+                        status.update(label=message, state="running")
+                    report = future.result()
+                    status.update(label="News index updated.", state="complete")
             elapsed_seconds = monotonic() - started
-            countdown.empty()
             if report.succeeded:
                 st.session_state.ingestion_completed = True
             if report.succeeded:
