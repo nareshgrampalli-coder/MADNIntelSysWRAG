@@ -18,6 +18,11 @@ from .models import NewsCategory, RawArticle
 logger = logging.getLogger(__name__)
 MAX_ARTICLES_PER_FEED = 3
 MAX_ARTICLES_PER_CATEGORY = 3
+INDIA_RELEVANCE_TERMS: tuple[str, ...] = (
+    "india", "indian", "bharat", "new delhi", "mumbai", "bengaluru", "bangalore",
+    "kolkata", "chennai", "hyderabad", "ahmedabad", "pune", "rbi", "sebi", "nse",
+    "bse", "sensex", "nifty", "lok sabha", "rajya sabha", "ipl", "bcci",
+)
 NOISE_PHRASES: tuple[str, ...] = (
     "You are logged in",
     "Loading",
@@ -198,7 +203,9 @@ class DomainFetcher:
         articles: list[RawArticle] = []
         for source in self.sources:
             try:
-                articles.extend(_filter_relevant(self.adapter.fetch(source), source.relevance_terms))
+                fetched = self.adapter.fetch(source)
+                relevant = _filter_relevant(fetched, source.relevance_terms)
+                articles.extend(_filter_india_relevant(relevant))
             except Exception:
                 logger.exception("Failed to fetch source %s", source.name)
         unique_articles = deduplicate_articles(articles)
@@ -256,6 +263,15 @@ def _filter_relevant(articles: Iterable[RawArticle], relevance_terms: tuple[str,
     if not relevance_terms:
         return list(articles)
     terms = tuple(term.casefold() for term in relevance_terms)
+    return [
+        article
+        for article in articles
+        if any(term in f"{article.title} {article.content}".casefold() for term in terms)
+    ]
+
+
+def _filter_india_relevant(articles: Iterable[RawArticle]) -> list[RawArticle]:
+    terms = tuple(term.casefold() for term in INDIA_RELEVANCE_TERMS)
     return [
         article
         for article in articles

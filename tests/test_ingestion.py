@@ -17,7 +17,7 @@ RSS = b"""
   <item>
     <title>Markets react to policy news</title>
     <link>https://example.com/one</link>
-    <description>Markets moved after the announcement.</description>
+    <description>Indian markets moved after the announcement.</description>
     <pubDate>Sat, 26 Sep 2026 08:00:00 GMT</pubDate>
   </item>
   <item>
@@ -38,13 +38,13 @@ def test_parse_rss_normalizes_article_fields() -> None:
     assert len(articles) == 2
     assert articles[0].category is NewsCategory.FINANCE
     assert articles[0].published_at.tzinfo == timezone.utc
-    assert articles[0].content == "Markets moved after the announcement."
+    assert articles[0].content == "Indian markets moved after the announcement."
 
 
 def test_parse_rss_accepts_items_without_description() -> None:
     source = FeedSource("Example Finance", "https://example.com/rss", NewsCategory.FINANCE)
     payload = RSS.replace(
-        b"<description>Markets moved after the announcement.</description>",
+        b"<description>Indian markets moved after the announcement.</description>",
         b"",
         1,
     )
@@ -66,7 +66,13 @@ def test_parse_rss_accepts_iso_publication_dates() -> None:
 
 def test_deduplicate_articles_removes_duplicate_content() -> None:
     source = FeedSource("Example", "https://example.com/rss", NewsCategory.FINANCE)
-    articles = parse_rss(RSS, source)
+    articles = parse_rss(
+        RSS.replace(
+            b"<description>Markets moved after the announcement.</description>",
+            b"<description>Indian markets moved after the announcement.</description>",
+        ),
+        source,
+    )
 
     unique = deduplicate_articles(articles)
 
