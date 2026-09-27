@@ -3,10 +3,11 @@
 ## Current implementation snapshot — 2026-09-27
 
 - The app supports Technology, Finance, Politics, Stocks, and Sports. Default sources are LiveMint category feeds and Yahoo Finance for Finance; custom feed overrides are configurable per category.
-- Ingestion hydrates article pages, applies category relevance and India relevance using the title and original RSS summary, deduplicates, and returns up to three newest articles per category.
+- Ingestion considers up to 15 RSS entries per feed, hydrates article pages, applies category relevance and India relevance using the title and original RSS summary, deduplicates, and returns up to three newest articles per category.
+- Today's Briefing retrieves article-diverse evidence, limiting results to up to three distinct current-day articles per category rather than counting multiple chunks from one article.
 - Retrieval defaults to local sentence-transformers plus lexical scoring/reranking; if the dependency is missing, it falls back to deterministic hash embeddings and displays a warning. Answers remain extractive and grounded; no LLM is wired in.
 - HTTP caching, per-feed failure details, retrieval/interpretation/grounding probes, and optional in-app scheduled ingestion are implemented.
-- Latest full test run recorded for this snapshot: 78 passed.
+- Latest full test run recorded for this snapshot: 88 passed.
 
 ## Current phase
 

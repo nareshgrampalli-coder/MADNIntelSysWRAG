@@ -37,7 +37,7 @@ The application must have indexed data. Run ingestion first when the store is em
 The **Run ingestion** button in the sidebar executes the full data pipeline for every category:
 
 1. **Fetch RSS feeds** — downloads the configured feeds: LiveMint (`/rss/news`, `/rss/money`, `/rss/politics`, `/rss/markets`, `/rss/sports`) plus Yahoo Finance for the Finance category.
-2. **Hydrate articles** — follows each article link from the feed and downloads the full article page, fetching up to 3 articles per feed and 3 per category concurrently.
+2. **Hydrate articles** — considers up to 15 RSS entries per feed, follows their links, and downloads article pages so filtering can fill the category quota. The fetcher retains up to 3 relevant unique articles per category across feeds.
 3. **Clean content** — extracts the article body and removes navigation, scripts, advertisements, sponsored/promotional blocks, subscription prompts, social widgets, and login/session boilerplate.
 4. **Filter for relevance** — applies category-specific keywords, then keeps only articles whose title or original RSS summary contains India, Indian cities or institutions, Indian market identifiers such as NSE, Nifty, or Sensex, or India-specific sports signals such as IPL or BCCI. Incidental India mentions in the hydrated article body alone do not qualify an article.
 5. **Deduplicate** — drops repeated articles by URL and by content hash.
@@ -88,7 +88,7 @@ Broad summaries return only the available indexed evidence and do not invent mis
 
 ## How does the app handle stale news?
 
-Today's Briefing shows only articles published on the current calendar day. If no current-day article is available for a category, that category is omitted rather than showing older indexed stories.
+Today's Briefing shows up to three distinct articles published on the current calendar day per category. It selects one best-matching chunk per article so a long article does not crowd out other stories. If no current-day article is available for a category, that category is omitted rather than showing older indexed stories.
 
 ## Are answers generated from the open web at question time?
 

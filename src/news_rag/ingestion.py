@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 from .models import NewsCategory, RawArticle
 
 logger = logging.getLogger(__name__)
-MAX_ARTICLES_PER_FEED = 3
+MAX_RSS_CANDIDATES_PER_FEED = 15
 MAX_ARTICLES_PER_CATEGORY = 3
 INDIA_RELEVANCE_TERMS: tuple[str, ...] = (
     "india", "indian", "bharat", "new delhi", "mumbai", "bengaluru", "bangalore",
@@ -150,7 +150,7 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
     """Parse RSS 2.0 items, skipping malformed entries."""
     root = ET.fromstring(payload)
     articles: list[RawArticle] = []
-    for item in root.findall(".//item")[:MAX_ARTICLES_PER_FEED]:
+    for item in root.findall(".//item")[:MAX_RSS_CANDIDATES_PER_FEED]:
         title = _text(item.find("title"))
         url = _text(item.find("link"))
         content = _rss_content(item) or title

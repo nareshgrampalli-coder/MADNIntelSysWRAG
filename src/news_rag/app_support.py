@@ -59,12 +59,16 @@ def build_todays_briefing(
 ) -> list[tuple[NewsCategory, QueryResponse]]:
     """Build one grounded response per domain from the last 24 hours."""
     clock = lambda: now or datetime.now(timezone.utc)
-    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock), retrieval_limit=6)
+    engine = QueryEngine(store, interpreter=QueryInterpreter(clock=clock), retrieval_limit=3)
     briefing: list[tuple[NewsCategory, QueryResponse]] = []
     seen_urls: set[str] = set()
     for category in NewsCategory:
         topic = "stock market" if category is NewsCategory.STOCKS else category.value
-        response = engine.answer(f"latest {topic} news today", relevance_threshold=0.0)
+        response = engine.answer(
+            f"latest {topic} news today",
+            relevance_threshold=0.0,
+            distinct_articles=True,
+        )
         citations = sorted(
             (citation for citation in response.citations if citation.url not in seen_urls),
             key=lambda citation: citation.published_at,

@@ -145,6 +145,26 @@ def test_domain_fetcher_fills_three_article_category_quota_across_feeds() -> Non
     ]
 
 
+def test_domain_fetcher_looks_past_irrelevant_leading_feed_items() -> None:
+    payload = b"""<rss><channel>
+      <item><title>Global update one</title><link>https://example.com/1</link><description>Global markets update.</description><pubDate>Sat, 26 Sep 2026 08:00:00 GMT</pubDate></item>
+      <item><title>Global update two</title><link>https://example.com/2</link><description>Global markets update.</description><pubDate>Sat, 26 Sep 2026 08:01:00 GMT</pubDate></item>
+      <item><title>Global update three</title><link>https://example.com/3</link><description>Global markets update.</description><pubDate>Sat, 26 Sep 2026 08:02:00 GMT</pubDate></item>
+      <item><title>India markets update</title><link>https://example.com/4</link><description>Indian markets update.</description><pubDate>Sat, 26 Sep 2026 08:03:00 GMT</pubDate></item>
+    </channel></rss>"""
+
+    class FakeAdapter:
+        def fetch(self, source: FeedSource):
+            return parse_rss(payload, source)
+
+    fetcher = FinanceFetcher(
+        sources=(FeedSource("Finance", "https://example.com/rss", NewsCategory.FINANCE, ("markets",)),),
+        adapter=FakeAdapter(),
+    )
+
+    assert [article.title for article in fetcher.fetch()] == ["India markets update"]
+
+
 def test_domain_fetcher_rejects_foreign_story_with_incidental_india_body_text() -> None:
     source = FeedSource("News", "https://example.com/rss", NewsCategory.FINANCE)
 

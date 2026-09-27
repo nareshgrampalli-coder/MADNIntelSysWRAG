@@ -102,15 +102,25 @@ class QueryEngine:
         self.generator = generator or ExtractiveAnswerGenerator()
         self.retrieval_limit = retrieval_limit
 
-    def answer(self, question: str, relevance_threshold: float = 0.5) -> QueryResponse:
+    def answer(
+        self,
+        question: str,
+        relevance_threshold: float = 0.5,
+        distinct_articles: bool = False,
+    ) -> QueryResponse:
         if _requests_each_category(question):
             return self._answer_each_category()
         filters = self.interpreter.interpret(question)
+        candidate_limit = (
+            self.store.count()
+            if distinct_articles
+            else max(self.retrieval_limit * 3, self.retrieval_limit)
+        )
         chunks = self.store.query(
             question,
             category=filters.category,
             published_after=filters.published_after,
-            limit=max(self.retrieval_limit * 3, self.retrieval_limit),
+            limit=candidate_limit,
         )
         chunks = _rerank(
             question,
@@ -126,6 +136,8 @@ class QueryEngine:
             focused_chunks = _focus_topic_chunks(question, chunks)
             if focused_chunks:
                 chunks = focused_chunks
+        if distinct_articles:
+            chunks = _best_chunk_per_article(chunks)
         chunks = chunks[: self.retrieval_limit]
         if not chunks:
             return QueryResponse(answer="I don't have news on that.")
@@ -153,6 +165,13 @@ class QueryEngine:
         if not answers:
             return QueryResponse(answer="I don't have news on that.")
         return QueryResponse(answer="\n\n".join(answers), citations=tuple(citations), grounded=True)
+
+
+def _best_chunk_per_article(chunks: list[ArticleChunk]) -> list[ArticleChunk]:
+    best_chunks: dict[str, ArticleChunk] = {}
+    for chunk in chunks:
+        best_chunks.setdefault(chunk.article_url, chunk)
+    return list(best_chunks.values())
 
 
 def _explicit_date(question: str) -> datetime | None:

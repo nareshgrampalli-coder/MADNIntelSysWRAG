@@ -59,7 +59,7 @@ The Vercel API uses the standard library and does not require the vector or UI e
 
 ## Validation Evidence
 
-- Full automated test suite at this review: **78 passed**.
+- Full automated test suite at this review: **88 passed**.
 - Requirements dependency dry run: **successful**.
 - Vercel preview deployment: **successful** after configuring `api.health:handler`.
 - Vercel production health API: deployed under the `news-rag` project.

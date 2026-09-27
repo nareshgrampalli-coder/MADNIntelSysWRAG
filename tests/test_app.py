@@ -135,6 +135,43 @@ def test_build_todays_briefing_returns_grounded_domains(tmp_path) -> None:
     assert [category for category, _ in briefing] == [NewsCategory.FINANCE, NewsCategory.STOCKS]
 
 
+def test_build_todays_briefing_limits_distinct_articles_not_chunks(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    chunks = [
+        ArticleChunk(
+            chunk_id=f"long-story-{index}",
+            article_url="https://example.com/long-story",
+            text="India cricket sports update with match details.",
+            chunk_index=index,
+            category=NewsCategory.SPORTS,
+            source="Example News",
+            published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+            metadata={"title": "Latest sports news from India"},
+        )
+        for index in range(8)
+    ]
+    chunks.extend(
+        ArticleChunk(
+            chunk_id=f"story-{index}",
+            article_url=f"https://example.com/story-{index}",
+            text="India cricket sports update with match details.",
+            chunk_index=0,
+            category=NewsCategory.SPORTS,
+            source="Example News",
+            published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+            metadata={"title": f"Latest sports news {index} from India"},
+        )
+        for index in range(2)
+    )
+    store.upsert(chunks)
+
+    briefing = build_todays_briefing(store, datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
+
+    sports_response = next(response for category, response in briefing if category is NewsCategory.SPORTS)
+    assert len(sports_response.citations) == 3
+    assert len({citation.url for citation in sports_response.citations}) == 3
+
+
 def test_verify_retrieval_quality_reports_category_coverage(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
@@ -236,6 +273,9 @@ def test_briefing_shows_reindex_instructions_for_embedding_mismatch() -> None:
     class MismatchedStore:
         def query(self, *args, **kwargs):
             raise EmbeddingProviderMismatch("Stored vectors use a different embedding provider.")
+
+        def count(self):
+            return 1
 
     st = FakeStreamlit()
 
