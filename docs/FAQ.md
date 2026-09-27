@@ -116,6 +116,8 @@ py worker.py
 
 Set `NEWS_RAG_INTERVAL_SECONDS` to configure the interval. The default schedule is daily.
 
+For Streamlit-only deployments, set `NEWS_RAG_AUTO_INGEST_SECONDS` to a positive number of seconds. The app will then run ingestion automatically through a timed Streamlit fragment while the app session is active. Leave it empty to keep ingestion manual. The worker remains the better option for reliable always-on scheduling because it does not depend on an open browser session.
+
 ## Is the application production-ready?
 
 The project includes ingestion, retrieval, evaluation fixtures, deployment scaffolding, and tests. Production use still requires durable storage, source licensing review, rate-limit monitoring, alerting, authenticated worker triggers, and measured live evaluation.

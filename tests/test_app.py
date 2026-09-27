@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines
+from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines, scheduled_ingestion_interval
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.app_support import (
     build_contextual_question,
@@ -18,6 +18,14 @@ def test_apply_filters_adds_category_and_date_constraints() -> None:
     result = apply_filters("What happened?", NewsCategory.FINANCE, date(2026, 9, 20))
 
     assert result == "What happened? (finance, since 2026-09-20)"
+
+
+def test_scheduled_ingestion_interval_is_optional_and_validated(monkeypatch) -> None:
+    monkeypatch.delenv("NEWS_RAG_AUTO_INGEST_SECONDS", raising=False)
+    assert scheduled_ingestion_interval() is None
+
+    monkeypatch.setenv("NEWS_RAG_AUTO_INGEST_SECONDS", "3600")
+    assert scheduled_ingestion_interval() == 3600.0
 
 
 def test_trim_sentence_keeps_short_lines_and_cuts_at_sentence_boundary() -> None:

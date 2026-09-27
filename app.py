@@ -1,6 +1,7 @@
 """Streamlit user interface for the News RAG application."""
 
 from concurrent.futures import ThreadPoolExecutor
+import os
 from time import monotonic, sleep
 
 from news_rag.config import Settings
@@ -42,6 +43,19 @@ def build_pipeline(store: VectorStore, cache_dir=None) -> NewsPipeline:
     )
 
 
+def scheduled_ingestion_interval() -> float | None:
+    value = os.getenv("NEWS_RAG_AUTO_INGEST_SECONDS", "").strip()
+    if not value:
+        return None
+    try:
+        interval = float(value)
+    except ValueError as error:
+        raise ValueError("NEWS_RAG_AUTO_INGEST_SECONDS must be a positive number") from error
+    if interval <= 0:
+        raise ValueError("NEWS_RAG_AUTO_INGEST_SECONDS must be a positive number")
+    return interval
+
+
 def main() -> None:
     try:
         import streamlit as st
@@ -52,6 +66,22 @@ def main() -> None:
     store = build_store(settings)
     engine = QueryEngine(store)
     pipeline = build_pipeline(store, settings.data_dir / "http_cache")
+    auto_ingest_seconds = scheduled_ingestion_interval()
+
+    @st.fragment(run_every=auto_ingest_seconds)
+    def run_scheduled_ingestion() -> None:
+        if auto_ingest_seconds is None:
+            return
+        started = monotonic()
+        report = pipeline.run_once()
+        st.session_state.scheduled_ingestion_at = monotonic()
+        if report.succeeded:
+            st.session_state.ingestion_completed = True
+            st.toast(f"Scheduled ingestion stored {report.chunks_stored} chunks.")
+        else:
+            st.warning("Scheduled ingestion failed: " + "; ".join(report.errors))
+
+    run_scheduled_ingestion()
     if store.count() > 0:
         st.session_state.setdefault("ingestion_completed", True)
 
