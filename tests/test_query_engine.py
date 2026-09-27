@@ -233,6 +233,28 @@ def test_query_engine_focuses_exact_multi_word_topics(tmp_path) -> None:
     assert "film" not in response.answer.casefold()
 
 
+def test_query_engine_keeps_prediction_answers_with_one_article(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            replace(
+                make_chunk("fear-index", NewsCategory.STOCKS, 0, "Greed and Fear index commentary includes several global markets."),
+                metadata={"title": "Greed and Fear index and global market outlook"},
+            ),
+            replace(
+                make_chunk("prediction", NewsCategory.STOCKS, 0, "The Nifty may find support at 22,700 tomorrow. Resistance is seen near 23,300."),
+                metadata={"title": "Stock market prediction for tomorrow: Sensex and Nifty outlook"},
+            ),
+        ]
+    )
+
+    response = QueryEngine(store).answer("What is stock market prediction tomorrow?")
+
+    assert [citation.url for citation in response.citations] == ["https://example.com/prediction"]
+    assert "Greed and Fear" not in response.answer
+    assert "support at 22,700" in response.answer
+
+
 def test_query_engine_supports_overall_news_summary_wording(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(

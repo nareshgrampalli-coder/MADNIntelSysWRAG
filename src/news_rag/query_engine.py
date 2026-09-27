@@ -219,7 +219,19 @@ def _focus_topic_chunks(question: str, chunks: list[ArticleChunk]) -> list[Artic
             )
         )
     ]
-    return matching or chunks
+    if matching:
+        return matching
+    if any(term in terms for term in {"tomorrow", "forecast", "prediction", "outlook", "expected"}):
+        article_scores: dict[str, tuple[int, list[ArticleChunk]]] = {}
+        for chunk in chunks:
+            title_terms = set(re.findall(r"[a-z0-9]+", chunk.metadata.get("title", "").casefold()))
+            score, article_chunks = article_scores.setdefault(chunk.article_url, (len(terms & title_terms), []))
+            article_scores[chunk.article_url] = (score, [*article_chunks, chunk])
+        if article_scores:
+            score, focused = max(article_scores.values(), key=lambda item: item[0])
+            if score >= 2:
+                return focused
+    return chunks
 
 
 def _rerank(
