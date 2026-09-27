@@ -4,7 +4,7 @@
 
 - The app supports Technology, Finance, Politics, Stocks, and Sports. Default sources are LiveMint category feeds and Yahoo Finance for Finance; custom feed overrides are configurable per category.
 - Ingestion hydrates article pages, applies category relevance and India relevance using the title and original RSS summary, deduplicates, and returns up to three newest articles per category.
-- Retrieval uses deterministic hash embeddings plus lexical scoring/reranking. Answers are extractive and grounded in indexed chunks; no LLM or semantic embedding provider is currently wired in.
+- Retrieval defaults to deterministic hash embeddings plus lexical scoring/reranking; optional local sentence-transformers embeddings can be enabled through configuration. Answers remain extractive and grounded; no LLM is wired in.
 - HTTP caching, per-feed failure details, retrieval/interpretation/grounding probes, and optional in-app scheduled ingestion are implemented.
 - Latest full test run recorded for this snapshot: 78 passed.
 

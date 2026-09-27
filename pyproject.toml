@@ -17,6 +17,9 @@ dev = [
 vector = [
     "chromadb>=0.5",
 ]
+embeddings = [
+    "sentence-transformers>=3.0",
+]
 ui = [
     "streamlit>=1.40",
 ]

@@ -6,7 +6,7 @@
 
 ## Overall Status
 
-**MVP compliance: Substantially compliant.** The repository contains a working Streamlit application, RSS ingestion pipeline, processing and chunking, local hash-vector retrieval, extractive grounded answers with citations, evaluation fixtures, documentation, and deployed application/API surfaces. No LLM or semantic embedding model is currently connected.
+**MVP compliance: Substantially compliant.** The repository contains a working Streamlit application, RSS ingestion pipeline, processing and chunking, local vector retrieval, extractive grounded answers with citations, evaluation fixtures, documentation, and deployed application/API surfaces. Hash embeddings are the default; an optional local sentence-transformers provider is available. No LLM is currently connected.
 
 **Production compliance: Partial.** Persistent hosted storage, measured evaluation scores, authenticated ingestion endpoints, and a separately hosted worker remain operational hardening tasks.
 
@@ -22,7 +22,7 @@
 | Deduplication and boilerplate cleaning | Complete | URL/content-hash deduplication and deterministic HTML/boilerplate cleaning are implemented and tested. |
 | Summaries, tags, entities, and category metadata | Complete for MVP | Processing derives extractive summaries, tags, entities, and category metadata. |
 | Up to 400-word article chunks | Complete for MVP | Bounded word-based chunking is implemented with provenance preservation. |
-| Embeddings and vector database | Complete for MVP with semantic limitation | Hash embeddings, persistent JSON storage, and an optional ChromaDB adapter are available. Hash vectors are not semantic model embeddings. Select the backend with `NEWS_RAG_VECTOR_BACKEND`; Chroma runtime validation depends on the optional extra. |
+| Embeddings and vector database | Complete for MVP; optional semantic provider | Hash embeddings are the zero-dependency default; `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers` enables a local sentence-transformers model. Persistent JSON storage and an optional ChromaDB adapter are available. Select backend with `NEWS_RAG_VECTOR_BACKEND`; Chroma runtime validation depends on its optional extra. |
 | Rich metadata filtering | Complete | Category, publication date, source, URL, entities, and ingestion metadata are stored or preserved for retrieval. |
 | Query interpretation | Complete for MVP | Category, relative date ranges, and explicit dates are supported. |
 | Hybrid search and reranking | Complete for MVP | JSON retrieval combines semantic similarity with lexical term overlap, then the query engine reranks candidates by relevance and bounded recency. A production-scale reranker remains optional. |

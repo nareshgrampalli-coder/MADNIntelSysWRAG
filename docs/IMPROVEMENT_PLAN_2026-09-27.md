@@ -1,33 +1,63 @@
 # Improvement Plan — 2026-09-27
 
-Status legend: `[x]` done, `[~]` in progress, `[ ]` pending.
+This is the consolidated improvement plan. It replaces the undated and 2026-09-26 improvement-plan documents. Status: `[x]` implemented, `[~]` in progress, `[ ]` pending.
 
-Carried over from [IMPROVEMENT_PLAN_2026-09-26.md](IMPROVEMENT_PLAN_2026-09-26.md): Phases 1–2 are complete. This plan updates Phase 3 status and adds Phase 5 for LLM-based retrieval/generation.
+## Phase 1 — Reliability and data freshness
 
-## Phase 3 — Ops and observability (implemented 2026-09-26/27)
+- [x] Preserve ingestion completion across app restarts when indexed data already exists.
+- [x] Use sentence-boundary trimming for long chat responses.
+- [x] Remove the unused Run RAG pipeline UI and keep the interval scheduler for the worker.
+- [x] Evict stale JSON vector records using configurable `NEWS_RAG_MAX_AGE_DAYS` (default 14).
+- [x] Reject malformed publication dates instead of treating them as current.
+- [x] Add RSS/article HTTP caching with ETag and Last-Modified validators.
+- [x] Add retries and isolate feed failures; report failing feed names and URLs in the UI.
+- [x] Add optional in-app scheduled ingestion through `NEWS_RAG_AUTO_INGEST_SECONDS`.
 
-- [x] HTTP caching for RSS/article fetches (ETag/Last-Modified) — implemented in `RssSourceAdapter` with `data/http_cache`.
-- [x] Per-feed failure details in the sidebar — `DomainFetcher.errors` reports failures inline with feed name/URL; successes are not individually listed.
-- [x] Post-ingestion verification probes for retrieval, query interpretation, and grounding — implemented in `app_support.py`.
-- [x] Optional in-app scheduled ingestion (`NEWS_RAG_AUTO_INGEST_SECONDS`).
-- [ ] Optional CI smoke test probing live feed URLs (LiveMint, Yahoo) for availability.
+## Phase 2 — Ingestion and article quality
 
-## Phase 4 — Semantic quality and docs (partially pending)
+- [x] Support Technology, Finance, Politics, Stocks, and Sports category fetchers, with LiveMint defaults and Yahoo Finance for Finance.
+- [x] Allow multiple configured RSS feeds per category; deduplicate and return up to the newest three articles per category.
+- [x] Filter on category relevance and India relevance using article title and original RSS summary.
+- [x] Hydrate article pages when available and fall back to the RSS item content when hydration fails or yields no text.
+- [x] Clean common navigation, ad, subscription, and session boilerplate; deduplicate by URL and content.
+- [ ] Improve detection and rejection of pages that return boilerplate or too little meaningful article text.
+- [ ] Complete source licensing, robots-policy, and rate-limit review for configured publishers.
+- [ ] Add a CI smoke test for configured LiveMint and Yahoo feed availability.
 
-- [ ] Pluggable real embedding provider (e.g., sentence-transformers) behind `NEWS_RAG_EMBEDDING_PROVIDER`; hash embeddings remain the dev/test default.
-- [x] Add test coverage for `api/`, `worker.py`, and the Streamlit chat-context flow (repeated/follow-up questions).
-- [x] Refresh README and FAQ for Sports category, LiveMint sourcing, and summarization behavior.
+## Phase 3 — Retrieval and embeddings
 
-## Phase 5 — LLM-assisted retrieval and generation (pending)
+- [x] Keep the dependency-free `HashEmbeddingProvider` as the default and test fallback.
+- [x] Add optional local sentence-transformers embeddings configured with `NEWS_RAG_EMBEDDING_PROVIDER` and `NEWS_RAG_EMBEDDING_MODEL`.
+- [x] Use the configured provider with both JSON and Chroma vector-store backends.
+- [x] Detect persisted indexes built with a different provider/model and require reset plus re-ingestion.
+- [x] Combine lexical and vector similarity and apply relevance/recency reranking.
+- [x] Interpret category/date constraints and focus matching topic/article evidence.
+- [ ] Add user-visible retrieval diagnostics for selected category, date filter, scores, and article-level evidence selection.
+- [ ] Benchmark retrieval quality on a representative, recorded news snapshot.
 
-Motivation: `HashEmbeddingProvider` is a lexical bag-of-hashed-tokens with no semantic understanding, and `ExtractiveAnswerGenerator` relies on a growing set of regex-based heuristics (single-article focus, exact multi-word topic focus, forward-looking "tomorrow/prediction" focus) to keep answers coherent. Both are hitting their design ceiling.
+## Phase 4 — Answer quality and grounding
 
-- [ ] Add a real sentence-embedding provider (local `sentence-transformers` model or an API embedding endpoint) behind the existing `NEWS_RAG_EMBEDDING_PROVIDER` interface, keeping hash embeddings as the no-dependency dev/test fallback.
-- [ ] Add an optional LLM-based grounded answer generator (strict "answer only from provided chunks, cite sources, refuse otherwise" prompt) as an alternative to `ExtractiveAnswerGenerator`, reusing existing grounding/refusal verification in `app_support.py`.
-- [ ] Consolidate the accumulated topic-focus heuristics in `query_engine.py` once an LLM-based interpreter/generator is available, instead of adding further special cases.
-- [ ] Add cost/latency guardrails (timeouts, fallback to extractive generator on LLM failure) so the app remains usable without external API access.
+- [x] Keep the deterministic extractive generator as the default; use retrieved chunks and citations.
+- [x] Return a no-answer response when relevant evidence is unavailable.
+- [x] Add ingestion-time retrieval, interpretation, and grounding verification probes.
+- [x] Add regression coverage for article-level coherence on forward-looking stock-market questions.
+- [ ] Add an optional LLM-based grounded answer generator that answers only from supplied chunks and cites supporting articles.
+- [ ] Preserve the extractive generator as a fallback if an LLM provider is unavailable or fails.
+- [ ] Add timeout, latency, and cost limits plus grounding/refusal checks for generated answers.
+- [ ] Reduce special-case query heuristics only after equivalent behavior is covered by evaluation tests.
 
-## Phase 6 — Test and doc maintenance (pending)
+## Phase 5 — Evaluation and operations
 
-- [ ] Keep this improvement plan file in sync after each implemented phase; retire prior dated plans once fully superseded.
-- [ ] Add regression tests for `api/` and `worker.py` before introducing an LLM-backed generator, to protect existing behavior during the migration.
+- [x] Maintain a 20-question evaluation dataset and scoring utilities.
+- [x] Report category retrieval coverage, ingestion freshness, feed failures, and verification results.
+- [x] Provide JSON and optional Chroma storage backends and document reset/reindex requirements.
+- [x] Add focused tests for the API health endpoint, worker, and Streamlit chat-context support.
+- [ ] Run and record evaluation scores against a representative live-data snapshot.
+- [ ] Add alerts for repeated feed failures and zero-article ingestion runs.
+- [ ] Configure durable production storage, authenticated worker triggers, and external monitoring.
+
+## Phase 6 — Documentation maintenance
+
+- [x] Align README, architecture, FAQ, deployment, demo, progress, and compliance docs with current behavior.
+- [x] Consolidate the improvement plans into this single dated document.
+- [ ] Keep this plan updated as items are implemented; create a new dated copy only when a new snapshot is needed.

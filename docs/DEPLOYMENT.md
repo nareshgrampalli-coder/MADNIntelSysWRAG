@@ -55,7 +55,8 @@ Configure these values in the Vercel project settings, not in committed files:
 - `NEWS_RAG_<CATEGORY>_RSS_URLS` for comma-separated feed overrides across Technology, Finance, Politics, Stocks, and Sports
 - Matching `NEWS_RAG_<CATEGORY>_APPROVED_RSS_URLS` variables for operator-approved feeds; approved lists take precedence over regular overrides
 - Legacy `news.google.com` URLs are ignored; remove them from existing Streamlit Secrets to use the verified publisher defaults
-- LLM/embedding provider settings are placeholders only; those providers are not currently implemented or required by the app
+- `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers` and optional `NEWS_RAG_EMBEDDING_MODEL` enable local semantic embeddings after installing the `embeddings` extra and downloading the model on first use
+- Reset and re-ingest indexed data after changing embedding provider/model. LLM provider settings remain placeholders and are not used for answer generation.
 
 ## Production worker
 

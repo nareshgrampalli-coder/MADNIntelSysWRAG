@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta, timezone
+import sys
+from types import ModuleType
 
 import pytest
 
 from news_rag.models import ArticleChunk, NewsCategory
 from news_rag.config import Settings
-from news_rag.vector_store import HashEmbeddingProvider, JsonVectorStore, build_vector_store
+from news_rag.vector_store import (
+    HashEmbeddingProvider,
+    JsonVectorStore,
+    SentenceTransformerEmbeddingProvider,
+    build_vector_store,
+)
 
 
 def chunk(chunk_id: str, category: NewsCategory, days_ago: int = 0) -> ArticleChunk:
@@ -86,3 +93,63 @@ def test_vector_store_factory_rejects_unknown_backend(tmp_path, monkeypatch) -> 
 
     with pytest.raises(ValueError, match="json.*chroma"):
         build_vector_store(Settings(vector_store_dir=tmp_path))
+
+
+def test_sentence_transformer_provider_normalizes_model_output(monkeypatch) -> None:
+    class FakeModel:
+        def __init__(self, model_name: str) -> None:
+            assert model_name == "test/model"
+
+        def encode(self, text: str, normalize_embeddings: bool):
+            assert text == "news query"
+            assert normalize_embeddings is True
+            return [0.6, 0.8]
+
+    fake_module = ModuleType("sentence_transformers")
+    fake_module.SentenceTransformer = FakeModel
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
+
+    provider = SentenceTransformerEmbeddingProvider("test/model")
+
+    assert provider.provider_id == "sentence-transformers:test/model"
+    assert provider.embed("news query") == [0.6, 0.8]
+
+
+def test_vector_store_factory_uses_configured_sentence_transformer(tmp_path, monkeypatch) -> None:
+    class FakeModel:
+        def __init__(self, model_name: str) -> None:
+            self.model_name = model_name
+
+        def encode(self, text: str, normalize_embeddings: bool):
+            return [1.0, 0.0]
+
+    fake_module = ModuleType("sentence_transformers")
+    fake_module.SentenceTransformer = FakeModel
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
+    monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
+
+    store = build_vector_store(
+        Settings(
+            vector_store_dir=tmp_path,
+            embedding_provider="sentence-transformers",
+            embedding_model="test/model",
+        )
+    )
+
+    assert isinstance(store, JsonVectorStore)
+    assert store.embedding_provider.provider_id == "sentence-transformers:test/model"
+
+
+def test_json_store_requires_reindex_after_embedding_provider_change(tmp_path) -> None:
+    path = tmp_path / "vectors.json"
+    original = JsonVectorStore(path)
+    original.upsert([chunk("finance", NewsCategory.FINANCE)])
+    changed = JsonVectorStore(path, embedding_provider=HashEmbeddingProvider(dimensions=8))
+
+    with pytest.raises(RuntimeError, match="reset and re-ingest"):
+        changed.query("policy")
+
+    changed.reset()
+    changed.upsert([chunk("finance", NewsCategory.FINANCE)])
+
+    assert changed.count() == 1
