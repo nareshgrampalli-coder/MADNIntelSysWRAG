@@ -198,8 +198,10 @@ class DomainFetcher:
     def __init__(self, sources: Iterable[FeedSource], adapter: RssSourceAdapter | None = None) -> None:
         self.sources = tuple(sources)
         self.adapter = adapter or RssSourceAdapter()
+        self.errors: list[str] = []
 
     def fetch(self) -> list[RawArticle]:
+        self.errors.clear()
         articles: list[RawArticle] = []
         for source in self.sources:
             try:
@@ -208,6 +210,7 @@ class DomainFetcher:
                 articles.extend(_filter_india_relevant(relevant))
             except Exception:
                 logger.exception("Failed to fetch source %s", source.name)
+                self.errors.append(f"{source.name}: failed to fetch {source.url}")
         unique_articles = deduplicate_articles(articles)
         unique_articles.sort(key=lambda article: article.published_at, reverse=True)
         return unique_articles[:MAX_ARTICLES_PER_CATEGORY]

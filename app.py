@@ -154,11 +154,9 @@ def main() -> None:
                 if grounding_passed < len(grounding_checks):
                     st.warning("Grounding verification failed: supported answers must cite evidence and unsupported questions must refuse.")
             else:
-                st.warning(
-                    "Ingestion completed with errors: "
-                    + "; ".join(report.errors)
-                    + f" Ingestion time: {elapsed_seconds:.1f}s."
-                )
+                st.warning(f"Ingestion completed with {len(report.errors)} error(s). Ingestion time: {elapsed_seconds:.1f}s.")
+                for error in report.errors:
+                    st.error(error)
 
         with st.expander("Sample questions for today"):
             st.markdown("- Summarize todays news in 3 bullet points.")

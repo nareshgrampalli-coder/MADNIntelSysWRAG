@@ -41,6 +41,7 @@ class NewsPipeline:
         for fetcher in self.fetchers:
             try:
                 articles.extend(fetcher.fetch())
+                errors.extend(getattr(fetcher, "errors", ()))
             except Exception as error:
                 name = fetcher.__class__.__name__
                 logger.exception("Fetcher failed: %s", name)

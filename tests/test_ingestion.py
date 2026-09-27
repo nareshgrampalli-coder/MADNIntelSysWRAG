@@ -96,6 +96,7 @@ def test_domain_fetcher_continues_after_source_failure() -> None:
     )
 
     assert len(fetcher.fetch()) == 1
+    assert fetcher.errors == ["Broken: failed to fetch https://bad.example/rss"]
 
 
 def test_domain_fetcher_applies_source_relevance_terms() -> None:
