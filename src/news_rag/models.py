@@ -21,6 +21,7 @@ class RawArticle:
     published_at: datetime
     content: str
     category: NewsCategory
+    summary: str = ""
 
 
 @dataclass(frozen=True)

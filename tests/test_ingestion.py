@@ -9,7 +9,7 @@ from news_rag.ingestion import (
     deduplicate_articles,
     parse_rss,
 )
-from news_rag.models import NewsCategory
+from news_rag.models import NewsCategory, RawArticle
 from news_rag.sources import sources_for
 
 
@@ -111,6 +111,28 @@ def test_domain_fetcher_applies_source_relevance_terms() -> None:
     )
 
     assert len(fetcher.fetch()) == 1
+
+
+def test_domain_fetcher_rejects_foreign_story_with_incidental_india_body_text() -> None:
+    source = FeedSource("News", "https://example.com/rss", NewsCategory.FINANCE)
+
+    class FakeAdapter:
+        def fetch(self, feed_source: FeedSource):
+            return [
+                RawArticle(
+                    title="One dead, hundreds of flights cancelled, power lines hit as 'Nor'easter' storm batters parts of US: What we know so far",
+                    url="https://example.com/storm",
+                    source=feed_source.name,
+                    published_at=datetime(2026, 9, 26, tzinfo=timezone.utc),
+                    content="US storm causes widespread disruption. India was mentioned in unrelated page content.",
+                    category=feed_source.category,
+                    summary="US storm causes widespread disruption.",
+                )
+            ]
+
+    fetcher = FinanceFetcher(sources=(source,), adapter=FakeAdapter())
+
+    assert fetcher.fetch() == []
 
 
 def test_stocks_fetcher_uses_stocks_category() -> None:

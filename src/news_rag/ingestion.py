@@ -79,6 +79,7 @@ class RssSourceAdapter:
             published_at=article.published_at,
             content=content,
             category=article.category,
+            summary=article.summary,
         )
 
     def _download(self, url: str) -> bytes:
@@ -167,6 +168,7 @@ def parse_rss(payload: bytes, source: FeedSource) -> list[RawArticle]:
                 published_at=published_at,
                 content=content,
                 category=source.category,
+                summary=content,
             )
         )
     return articles
@@ -332,5 +334,5 @@ def _filter_india_relevant(articles: Iterable[RawArticle]) -> list[RawArticle]:
     return [
         article
         for article in articles
-        if any(term in f"{article.title} {article.content}".casefold() for term in terms)
+        if any(term in f"{article.title} {article.summary}".casefold() for term in terms)
     ]
