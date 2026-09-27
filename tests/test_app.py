@@ -12,7 +12,7 @@ from news_rag.app_support import (
     verify_retrieval_quality,
 )
 from news_rag.query_engine import QueryEngine
-from news_rag.ui_helpers import trim_sentence
+from news_rag.ui_helpers import format_chat_answer, trim_sentence
 from news_rag.vector_store import EmbeddingProviderMismatch, HashEmbeddingProvider, JsonVectorStore
 
 
@@ -51,7 +51,7 @@ def test_trim_sentence_keeps_short_lines_and_cuts_at_sentence_boundary() -> None
     trimmed = trim_sentence(long_line, limit=80)
     assert len(trimmed) <= 80
     assert "..." not in trimmed
-    assert trimmed.endswith("sentence")
+    assert trimmed.endswith("sentence.")
     assert trimmed.startswith("First complete sentence here")
 
 
@@ -62,6 +62,39 @@ def test_trim_sentence_truncates_single_long_sentence_at_word_boundary() -> None
 
     assert len(trimmed) <= 84
     assert trimmed.endswith("...")
+
+
+def test_trim_sentence_preserves_a_complete_sentence_longer_than_limit() -> None:
+    line = "A complete sentence that is longer than the configured display limit " * 4 + "."
+
+    assert trim_sentence(line, limit=80) == line
+
+
+def test_trim_sentence_preserves_terminal_punctuation_on_short_lines() -> None:
+    assert trim_sentence("RBI cut the repo rate by 25 basis points.") == (
+        "RBI cut the repo rate by 25 basis points."
+    )
+    assert trim_sentence("Markets closed higher today!") == "Markets closed higher today!"
+
+
+def test_format_chat_answer_keeps_bullets_for_single_topic_answers() -> None:
+    answer = "- RBI held the policy rate steady.\n- Markets reacted positively."
+
+    assert format_chat_answer(answer) == answer
+
+
+def test_format_chat_answer_preserves_category_headers_and_bullets() -> None:
+    answer = (
+        "**Finance**\n- RBI held the policy rate steady.\n\n"
+        "**Technology**\n- New chips announced today."
+    )
+
+    formatted = format_chat_answer(answer)
+
+    assert "**Finance**" in formatted
+    assert "**Technology**" in formatted
+    assert "- RBI held the policy rate steady." in formatted
+    assert "- New chips announced today." in formatted
 
 
 def test_citation_lines_include_source_links_and_dates() -> None:

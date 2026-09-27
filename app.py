@@ -10,7 +10,7 @@ from news_rag.orchestration import NewsPipeline
 from news_rag.query_engine import QueryEngine
 from news_rag.sources import sources_for
 from news_rag.vector_store import VectorStore, build_vector_store
-from news_rag.ui_helpers import apply_filters, category_label, citation_lines, trim_sentence
+from news_rag.ui_helpers import apply_filters, category_label, citation_lines, format_chat_answer
 from news_rag.app_support import (
     build_sample_questions,
     build_contextual_question,
@@ -145,12 +145,7 @@ def main() -> None:
                 except Exception as error:
                     st.error(f"Unable to answer this question: {error}")
                     return
-            answer_lines = [line.strip("- ").strip() for line in response.answer.splitlines() if line.strip()]
-            if len(answer_lines) < 3:
-                answer_lines = [part.strip() for part in response.answer.split(". ") if part.strip()]
-            chat_answer = "\n".join(
-                f"- {trim_sentence(line)}" for line in answer_lines[:3]
-            )
+            chat_answer = format_chat_answer(response.answer)
             st.markdown(chat_answer)
             if response.citations:
                 with st.expander("Sources"):

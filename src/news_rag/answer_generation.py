@@ -18,6 +18,8 @@ def is_headline_request(question: str) -> bool:
         re.search(r"\bheadlines?\b", normalized)
         or re.search(r"\bwhat happened\b", normalized)
         or re.search(r"\b(?:today|latest|recent)\b.*\bnews\b", normalized)
+        or re.search(r"\bnews\b.*\b(?:today|latest|recent)\b", normalized)
+        or re.search(r"\bnews\b.*\bfocus\b|\bfocus\b.*\bnews\b", normalized)
         or is_summary_request(question) and re.search(r"\b(?:today|latest|recent)\b", normalized)
     )
 
@@ -85,16 +87,25 @@ class ExtractiveAnswerGenerator:
             sentences = [text] if using_title_fallback else re.split(r"(?<=[.!?])\s+", text)
             for sentence in sentences:
                 sentence = sentence.strip(" -")
+                sentence = re.sub(r"\s+([.!?])$", r"\1", sentence)
                 key = sentence.casefold()
                 if len(sentence) < 15 or key in seen:
                     continue
                 seen.add(key)
                 sentence_terms = set(re.findall(r"[a-z0-9]+", key))
                 relevance = len(query_terms & sentence_terms) / max(1, len(query_terms))
-                candidates.append((relevance, order, sentence.rstrip(".!?") + "."))
+                formatted_sentence = (
+                    sentence
+                    if sentence.endswith((".", "!", "?"))
+                    else sentence.rstrip(" .!?") + "."
+                )
+                candidates.append((relevance, order, formatted_sentence))
                 order += 1
         candidates.sort(key=lambda item: (-item[0], item[1]))
         excerpts = [sentence for _, _, sentence in candidates[:3]]
         if not excerpts:
-            excerpts = [clean_excerpt(chunks[0].text).rstrip(".!?") + "."]
+            fallback = re.sub(r"\s+([.!?])$", r"\1", clean_excerpt(chunks[0].text).strip())
+            if not fallback.endswith((".", "!", "?")):
+                fallback = fallback.rstrip(" .!?") + "."
+            excerpts = [fallback]
         return "\n".join(f"- {excerpt}" for excerpt in excerpts)

@@ -32,6 +32,10 @@ NOISE_PHRASES: tuple[str, ...] = (
     "LOGOUT",
     "You don't have any Active Subscription",
     "You do not have any Active Subscription",
+    "Log in to our website to save your bookmarks",
+    "It'll just take a moment",
+    "Looks like you have exceeded the limit to bookmark",
+    "Remove some to bookmark this image",
 )
 
 

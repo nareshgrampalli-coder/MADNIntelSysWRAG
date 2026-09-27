@@ -47,6 +47,17 @@ def test_query_engine_returns_grounded_answer_and_unique_citations(tmp_path) -> 
     assert response.citations[0].url.startswith("https://")
 
 
+def test_query_engine_removes_spaces_before_terminal_punctuation(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [make_chunk("score", NewsCategory.FINANCE, 0, "The team won 21-10 .")]
+    )
+
+    response = QueryEngine(store).answer("What happened in finance?")
+
+    assert response.answer == "- The team won 21-10."
+
+
 def test_query_engine_refuses_when_filters_find_no_evidence(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert([make_chunk("old", NewsCategory.TECHNOLOGY, 30, "Old technology story")])
@@ -121,7 +132,10 @@ def test_query_engine_limits_stock_news_to_stocks_category(tmp_path) -> None:
     store.upsert(
         [
             make_chunk("politics", NewsCategory.POLITICS, 0, "Stock policy debate in parliament"),
-            make_chunk("stocks", NewsCategory.STOCKS, 0, "Indian stocks rose in today's market news"),
+            replace(
+                make_chunk("stocks", NewsCategory.STOCKS, 0, "Indian stocks rose in today's market news"),
+                metadata={"title": "Indian stock market rises today"},
+            ),
         ]
     )
 
@@ -129,6 +143,7 @@ def test_query_engine_limits_stock_news_to_stocks_category(tmp_path) -> None:
 
     assert response.grounded is True
     assert response.citations[0].url.endswith("/stocks")
+    assert response.answer == "- Indian stock market rises today."
 
 
 def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
@@ -174,7 +189,7 @@ def test_query_engine_uses_headlines_for_daily_news_questions(tmp_path) -> None:
         [
             replace(
                 make_chunk("rbi", NewsCategory.FINANCE, 0, "The author is a financial journalist. RBI cut rates today."),
-                metadata={"title": "RBI lowers repo rate", "summary": "A financial journalist with years of experience."},
+                metadata={"title": "Will RBI lower the repo rate?", "summary": "A financial journalist with years of experience."},
             )
         ]
     )
@@ -184,7 +199,7 @@ def test_query_engine_uses_headlines_for_daily_news_questions(tmp_path) -> None:
     )
 
     assert response.grounded is True
-    assert response.answer == "- RBI lowers repo rate."
+    assert response.answer == "- Will RBI lower the repo rate?"
     assert response.citations[0].url.endswith("/rbi")
 
 
@@ -375,8 +390,14 @@ def test_query_engine_supports_daily_focus_question(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
         [
-            make_chunk("finance", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
-            make_chunk("technology", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+            replace(
+                make_chunk("finance", NewsCategory.FINANCE, 0, "RBI held the policy rate steady"),
+                metadata={"title": "Finance policy rate update"},
+            ),
+            replace(
+                make_chunk("technology", NewsCategory.TECHNOLOGY, 0, "Technology companies announced new products"),
+                metadata={"title": "Technology product announcements"},
+            ),
         ]
     )
 
@@ -384,6 +405,7 @@ def test_query_engine_supports_daily_focus_question(tmp_path) -> None:
 
     assert response.grounded is True
     assert response.citations
+    assert all(citation.title in response.answer for citation in response.citations)
 
 
 def test_query_engine_supports_natural_chat_style_recent_news_question(tmp_path) -> None:

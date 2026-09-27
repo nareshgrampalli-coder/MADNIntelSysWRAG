@@ -28,11 +28,33 @@ def citation_lines(response: QueryResponse) -> list[str]:
 
 def trim_sentence(line: str, limit: int = 240) -> str:
     """Trim a summary line at a sentence boundary when it exceeds the limit."""
-    text = line.rstrip(". ").strip()
+    text = line.strip()
     if len(text) <= limit:
         return text
-    truncated = text[: limit + 1]
+    working = text.rstrip(". ")
+    truncated = working[: limit + 1]
     boundary = max(truncated.rfind(". "), truncated.rfind("! "), truncated.rfind("? "))
     if boundary > limit // 2:
-        return text[:boundary]
+        return working[: boundary + 1]
+    if text.endswith((".", "!", "?")):
+        return text
     return re.sub(r"\s+\S*$", "", truncated).rstrip() + "..."
+
+
+def format_chat_answer(answer: str) -> str:
+    """Format an engine answer for chat display, preserving multi-category structure."""
+    if answer.startswith("**") or "\n\n**" in answer:
+        lines: list[str] = []
+        for line in answer.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                lines.append("")
+            elif stripped.startswith("**") and stripped.endswith("**"):
+                lines.append(stripped)
+            else:
+                lines.append(f"- {trim_sentence(stripped.strip('- '))}")
+        return "\n".join(lines).strip("\n")
+    answer_lines = [line.strip("- ").strip() for line in answer.splitlines() if line.strip()]
+    if len(answer_lines) < 3 and len(answer_lines) == 1:
+        answer_lines = [part.strip() for part in answer.split(". ") if part.strip()]
+    return "\n".join(f"- {trim_sentence(line)}" for line in answer_lines[:3])
