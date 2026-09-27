@@ -37,12 +37,16 @@ class EmbeddingProvider(Protocol):
 
 
 EMBEDDING_FALLBACK_MESSAGE = (
-    "sentence-transformers is not installed, so the app is using HashEmbeddingProvider. "
-    'Install it with `py -m pip install -e ".[embeddings]"` to enable semantic embeddings.'
+    "sentence-transformers is unavailable, so the app is using HashEmbeddingProvider. "
+    'Install or repair it with `py -m pip install -e ".[embeddings]"` to enable semantic embeddings.'
 )
 
 
 class EmbeddingDependencyMissing(RuntimeError):
+    pass
+
+
+class EmbeddingProviderMismatch(RuntimeError):
     pass
 
 
@@ -157,7 +161,7 @@ class JsonVectorStore:
             if record.get("embedding_provider", "hash:32") != self.embedding_provider.provider_id
         }
         if incompatible:
-            raise RuntimeError(
+            raise EmbeddingProviderMismatch(
                 "Stored vectors use a different embedding provider; reset and re-ingest "
                 f"the index before using {self.embedding_provider.provider_id}."
             )
@@ -244,7 +248,7 @@ class ChromaVectorStore:
             return
         provider_id = metadatas[0].get("_embedding_provider", "chromadb-default")
         if provider_id != self.embedding_provider.provider_id:
-            raise RuntimeError(
+            raise EmbeddingProviderMismatch(
                 "Stored vectors use a different embedding provider; reset and re-ingest "
                 f"the index before using {self.embedding_provider.provider_id}."
             )
@@ -292,8 +296,8 @@ def _build_embedding_provider(
             return SentenceTransformerEmbeddingProvider(
                 model_name or "sentence-transformers/all-MiniLM-L6-v2"
             ), None
-        except EmbeddingDependencyMissing:
-            return HashEmbeddingProvider(), EMBEDDING_FALLBACK_MESSAGE
+        except EmbeddingDependencyMissing as error:
+            return HashEmbeddingProvider(), str(error)
     raise ValueError(
         "NEWS_RAG_EMBEDDING_PROVIDER must be 'hash' or 'sentence-transformers'"
     )
@@ -304,7 +308,8 @@ def _load_sentence_transformer(model_name: str):
     try:
         from sentence_transformers import SentenceTransformer
     except ImportError as error:
-        raise EmbeddingDependencyMissing(EMBEDDING_FALLBACK_MESSAGE) from error
+        detail = f" Import error: {error}"
+        raise EmbeddingDependencyMissing(EMBEDDING_FALLBACK_MESSAGE + detail) from error
     return SentenceTransformer(model_name)
 
 

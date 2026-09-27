@@ -124,7 +124,8 @@ def test_vector_store_falls_back_to_hash_with_clear_warning_when_package_missing
     store = build_vector_store(Settings(vector_store_dir=tmp_path))
 
     assert isinstance(store.embedding_provider, HashEmbeddingProvider)
-    assert store.embedding_warning == EMBEDDING_FALLBACK_MESSAGE
+    assert store.embedding_warning.startswith(EMBEDDING_FALLBACK_MESSAGE)
+    assert "Import error:" in store.embedding_warning
 
 
 def test_vector_store_factory_rejects_unknown_backend(tmp_path, monkeypatch) -> None:

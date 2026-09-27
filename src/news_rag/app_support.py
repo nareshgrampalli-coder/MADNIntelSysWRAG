@@ -8,7 +8,7 @@ from .vector_store import VectorStore
 
 
 def build_contextual_question(messages: list[dict[str, str]], question: str) -> str:
-    """Keep follow-ups tied to the prior user question without accumulating history."""
+    """Keep referential follow-ups tied to the prior question only."""
     user_questions = [
         message["content"].strip().casefold()
         for message in messages[-6:]
@@ -17,11 +17,26 @@ def build_contextual_question(messages: list[dict[str, str]], question: str) -> 
     normalized_question = question.strip().casefold()
     if normalized_question in user_questions:
         return question
+    if not _is_contextual_follow_up(normalized_question):
+        return question
     previous_question = next(
         (message["content"].strip() for message in reversed(messages) if message["role"] == "user"),
         "",
     )
     return question if not previous_question else f"{previous_question} {question}"
+
+
+def _is_contextual_follow_up(question: str) -> bool:
+    return question.startswith((
+        "what about ",
+        "how about ",
+        "what are the risks",
+        "tell me more",
+        "can you elaborate",
+        "why is that",
+        "how does that",
+        "what does that",
+    )) or question in {"why?", "how?", "and?"}
 
 
 def build_sample_questions(store: VectorStore) -> dict[NewsCategory, tuple[str, ...]]:

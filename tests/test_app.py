@@ -11,7 +11,7 @@ from news_rag.app_support import (
 )
 from news_rag.query_engine import QueryEngine
 from news_rag.ui_helpers import trim_sentence
-from news_rag.vector_store import JsonVectorStore
+from news_rag.vector_store import EmbeddingProviderMismatch, HashEmbeddingProvider, JsonVectorStore
 
 
 def test_apply_filters_adds_category_and_date_constraints() -> None:
@@ -191,6 +191,14 @@ def test_build_contextual_question_handles_followups_and_repeats() -> None:
     assert build_contextual_question(messages, "What is the Nifty 50 target?") == messages[0]["content"]
 
 
+def test_build_contextual_question_does_not_merge_unrelated_questions() -> None:
+    messages = [{"role": "user", "content": "What is news with Virat Kohli?"}]
+
+    assert build_contextual_question(messages, "When is SAIL giving dividend?") == (
+        "When is SAIL giving dividend?"
+    )
+
+
 def test_verify_grounding_quality_checks_citations_and_refusal(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(
@@ -211,6 +219,30 @@ def test_verify_grounding_quality_checks_citations_and_refusal(tmp_path) -> None
     checks = verify_grounding_quality(store)
 
     assert checks == {"supported:cited": True, "unsupported:refused": True}
+
+
+def test_briefing_shows_reindex_instructions_for_embedding_mismatch() -> None:
+    from news_rag.briefing_view import render_todays_briefing
+
+    class FakeStreamlit:
+        warnings: list[str] = []
+
+        def subheader(self, text: str) -> None:
+            pass
+
+        def warning(self, text: str) -> None:
+            self.warnings.append(text)
+
+    class MismatchedStore:
+        def query(self, *args, **kwargs):
+            raise EmbeddingProviderMismatch("Stored vectors use a different embedding provider.")
+
+    st = FakeStreamlit()
+
+    render_todays_briefing(st, MismatchedStore(), lambda *args: None)
+
+    assert "Reset Indexed chunks data" in st.warnings[0]
+    assert "Run ingestion" in st.warnings[0]
 
 
 def test_verify_grounding_quality_refuses_unrelated_article_with_common_word_overlap(tmp_path) -> None:

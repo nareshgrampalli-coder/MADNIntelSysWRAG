@@ -6,7 +6,7 @@ from typing import Any
 from .app_support import build_todays_briefing
 from .models import NewsCategory
 from .ui_helpers import category_label
-from .vector_store import VectorStore
+from .vector_store import EmbeddingProviderMismatch, VectorStore
 
 
 def render_todays_briefing(
@@ -16,7 +16,13 @@ def render_todays_briefing(
 ) -> None:
     """Render indexed current-day articles without triggering ingestion."""
     st.subheader("Today's Briefing")
-    briefing = build_todays_briefing(store)
+    try:
+        briefing = build_todays_briefing(store)
+    except EmbeddingProviderMismatch as error:
+        st.warning(
+            f"{error} Use **Reset Indexed chunks data**, then **Run ingestion** to rebuild the index."
+        )
+        return
     if not briefing:
         st.info("No indexed news is available for today.")
     for category, response in briefing:
