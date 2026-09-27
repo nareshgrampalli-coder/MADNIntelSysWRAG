@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from datetime import date, datetime, timezone
 
 from app import apply_filters, build_sample_questions, build_todays_briefing, citation_lines, scheduled_ingestion_interval
@@ -283,6 +284,9 @@ def test_briefing_shows_reindex_instructions_for_embedding_mismatch() -> None:
 
         def warning(self, text: str) -> None:
             self.warnings.append(text)
+
+        def spinner(self, text: str):
+            return nullcontext()
 
     class MismatchedStore:
         def query(self, *args, **kwargs):

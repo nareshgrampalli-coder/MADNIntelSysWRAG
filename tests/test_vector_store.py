@@ -136,9 +136,12 @@ def test_vector_store_factory_rejects_unknown_backend(tmp_path, monkeypatch) -> 
 
 
 def test_sentence_transformer_provider_normalizes_model_output(monkeypatch) -> None:
+    loaded_models = []
+
     class FakeModel:
         def __init__(self, model_name: str) -> None:
             assert model_name == "test/model"
+            loaded_models.append(model_name)
 
         def encode(self, text: str, normalize_embeddings: bool):
             assert text == "news query"
@@ -152,7 +155,9 @@ def test_sentence_transformer_provider_normalizes_model_output(monkeypatch) -> N
     provider = SentenceTransformerEmbeddingProvider("test/model")
 
     assert provider.provider_id == "sentence-transformers:test/model"
+    assert loaded_models == []
     assert provider.embed("news query") == [0.6, 0.8]
+    assert loaded_models == ["test/model"]
 
 
 def test_vector_store_factory_uses_configured_sentence_transformer(tmp_path, monkeypatch) -> None:

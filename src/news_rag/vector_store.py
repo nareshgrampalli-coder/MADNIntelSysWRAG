@@ -4,6 +4,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
+from importlib import import_module
 import json
 import os
 from pathlib import Path
@@ -77,13 +78,20 @@ class SentenceTransformerEmbeddingProvider:
 
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> None:
         self.model_name = model_name
-        self.model = _load_sentence_transformer(model_name)
+        try:
+            import_module("sentence_transformers")
+        except ImportError as error:
+            detail = f" Import error: {error}"
+            raise EmbeddingDependencyMissing(EMBEDDING_FALLBACK_MESSAGE + detail) from error
+        self.model = None
 
     @property
     def provider_id(self) -> str:
         return f"sentence-transformers:{self.model_name}"
 
     def embed(self, text: str) -> list[float]:
+        if self.model is None:
+            self.model = _load_sentence_transformer(self.model_name)
         vector = self.model.encode(text, normalize_embeddings=True)
         if hasattr(vector, "tolist"):
             vector = vector.tolist()

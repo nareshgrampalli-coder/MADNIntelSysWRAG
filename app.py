@@ -63,12 +63,18 @@ def main() -> None:
     except ImportError as error:
         raise RuntimeError('Install the "ui" extra to run the Streamlit application') from error
 
-    settings = Settings.from_environment()
-    store = build_store(settings)
-    engine = QueryEngine(store)
-    pipeline = build_pipeline(store, settings.data_dir / "http_cache")
-    auto_ingest_seconds = scheduled_ingestion_interval()
-    initialize_ingestion_status(st.session_state)
+    st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
+    apply_styles(st)
+    st.title("News RAG Analyst")
+    st.caption("Answers are generated only from indexed, dated source material.")
+
+    with st.spinner("Preparing the news index..."):
+        settings = Settings.from_environment()
+        store = build_store(settings)
+        engine = QueryEngine(store)
+        pipeline = build_pipeline(store, settings.data_dir / "http_cache")
+        auto_ingest_seconds = scheduled_ingestion_interval()
+        initialize_ingestion_status(st.session_state)
 
     @st.fragment(run_every=auto_ingest_seconds)
     def run_scheduled_ingestion() -> None:
@@ -91,11 +97,6 @@ def main() -> None:
         st.write(summary)
         st.link_button("Read full article", url)
 
-    st.set_page_config(page_title="News RAG", page_icon="N", layout="wide")
-    apply_styles(st)
-    st.title("News RAG Analyst")
-    st.caption("Answers are generated only from indexed, dated source material.")
-
     with st.sidebar:
         st.header("Filters")
         if getattr(store, "embedding_warning", None):
@@ -103,7 +104,7 @@ def main() -> None:
         category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
         start_date = st.date_input("Published after", value=None)
         st.divider()
-        show_briefing = st.checkbox("Today's Briefing", value=True)
+        show_briefing = st.checkbox("Today's Briefing", value=False)
         st.metric("Indexed chunks", store.count())
         if st.button("Reset Indexed chunks data", type="tertiary"):
             store.reset()
@@ -205,6 +206,11 @@ def main() -> None:
             return
         render_todays_briefing(st, store, show_article_details)
 
+    if not show_briefing:
+        st.info(
+            "No news is displayed yet. Select **Today's Briefing** in the sidebar to view today's articles. "
+            "If the briefing is empty, run ingestion first."
+        )
     render_briefing()
 
     if "messages" not in st.session_state:

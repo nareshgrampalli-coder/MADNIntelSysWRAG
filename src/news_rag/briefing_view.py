@@ -16,8 +16,12 @@ def render_todays_briefing(
 ) -> None:
     """Render indexed current-day articles without triggering ingestion."""
     st.subheader("Today's Briefing")
+    if store.count() == 0:
+        st.info("Run ingestion to load today's news briefing.")
+        return
     try:
-        briefing = build_todays_briefing(store)
+        with st.spinner("Loading today's news briefing..."):
+            briefing = build_todays_briefing(store)
     except EmbeddingProviderMismatch as error:
         st.warning(
             f"{error} Use **Reset Indexed chunks data**, then **Run ingestion** to rebuild the index."
