@@ -99,6 +99,8 @@ def main() -> None:
 
     with st.sidebar:
         st.header("Filters")
+        if getattr(store, "embedding_warning", None):
+            st.warning(store.embedding_warning)
         category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
         start_date = st.date_input("Published after", value=None)
         st.divider()

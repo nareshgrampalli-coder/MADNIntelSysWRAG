@@ -104,7 +104,7 @@ The default local backend is JSON. ChromaDB is optional and can be selected thro
 
 ## Can I use semantic embeddings?
 
-Yes. Install the optional dependency with `py -m pip install -e ".[embeddings]"`, set `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers`, and optionally select a model with `NEWS_RAG_EMBEDDING_MODEL`. The default is `sentence-transformers/all-MiniLM-L6-v2`, downloaded locally on first use. Hash embeddings remain the dependency-free default. Reset and re-ingest the index whenever the embedding provider or model changes.
+Sentence-transformers is the default provider, using `sentence-transformers/all-MiniLM-L6-v2`, downloaded locally on first use. Install its dependency with `py -m pip install -e ".[embeddings]"`. If the package is missing, the app falls back to `HashEmbeddingProvider` and displays a warning. Set `NEWS_RAG_EMBEDDING_PROVIDER=hash` to explicitly use the fallback. Reset and re-ingest the index whenever the embedding provider or model changes.
 
 ## How can I run scheduled ingestion?
 

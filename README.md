@@ -29,7 +29,7 @@ Run scheduled ingestion with `py worker.py`. Set `NEWS_RAG_INTERVAL_SECONDS=3600
 
 Default RSS feeds are LiveMint for Technology, Finance, Politics, Stocks, and Sports, plus Yahoo Finance for Finance. Each category can use comma-separated custom feeds through `NEWS_RAG_<CATEGORY>_RSS_URLS`; operator-approved URLs can be set with the matching `NEWS_RAG_<CATEGORY>_APPROVED_RSS_URLS` variables. Approved URLs take precedence over regular overrides. Legacy `news.google.com` overrides are ignored. Articles are filtered for category relevance and India relevance before indexing.
 
-The current answer generator is deterministic and extractive; no LLM is configured. Hash embeddings are the zero-dependency default. To enable local semantic embeddings, install `py -m pip install -e ".[embeddings]"`, set `NEWS_RAG_EMBEDDING_PROVIDER=sentence-transformers`, and optionally set `NEWS_RAG_EMBEDDING_MODEL` (default `sentence-transformers/all-MiniLM-L6-v2`). The model is downloaded on first use. After changing the provider or model, reset indexed data and re-ingest because vectors from different embedding spaces cannot be mixed.
+The current answer generator is deterministic and extractive; no LLM is configured. Sentence-transformers is the default embedding provider, using `sentence-transformers/all-MiniLM-L6-v2`; if the package is missing, the app automatically falls back to `HashEmbeddingProvider` and displays a warning. Install the model dependency with `py -m pip install -e ".[embeddings]"`; the model downloads on first use. After changing provider or model, reset indexed data and re-ingest because vectors from different embedding spaces cannot be mixed.
 
 ## Repository structure
 

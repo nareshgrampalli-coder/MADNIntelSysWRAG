@@ -213,6 +213,28 @@ def test_verify_grounding_quality_checks_citations_and_refusal(tmp_path) -> None
     assert checks == {"supported:cited": True, "unsupported:refused": True}
 
 
+def test_verify_grounding_quality_refuses_unrelated_article_with_common_word_overlap(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="asian-games",
+                article_url="https://example.com/asian-games",
+                text="This event coverage describes the Asian Games competition.",
+                chunk_index=0,
+                category=NewsCategory.SPORTS,
+                source="Example News",
+                published_at=datetime(2026, 9, 27, tzinfo=timezone.utc),
+                metadata={"title": "Asian Games event coverage"},
+            )
+        ]
+    )
+
+    checks = verify_grounding_quality(store)
+
+    assert checks["unsupported:refused"] is True
+
+
 def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(

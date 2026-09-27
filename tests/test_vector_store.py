@@ -7,9 +7,11 @@ import pytest
 from news_rag.models import ArticleChunk, NewsCategory
 from news_rag.config import Settings
 from news_rag.vector_store import (
+    EMBEDDING_FALLBACK_MESSAGE,
     HashEmbeddingProvider,
     JsonVectorStore,
     SentenceTransformerEmbeddingProvider,
+    _load_sentence_transformer,
     build_vector_store,
 )
 
@@ -81,11 +83,48 @@ def test_json_store_evicts_records_older_than_max_age(tmp_path) -> None:
 
 def test_vector_store_factory_defaults_to_json(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
+    monkeypatch.setenv("NEWS_RAG_EMBEDDING_PROVIDER", "hash")
     settings = Settings(vector_store_dir=tmp_path)
 
     store = build_vector_store(settings)
 
     assert isinstance(store, JsonVectorStore)
+
+
+def test_vector_store_factory_defaults_to_sentence_transformers(tmp_path, monkeypatch) -> None:
+    class FakeModel:
+        def __init__(self, model_name: str) -> None:
+            self.model_name = model_name
+
+        def encode(self, text: str, normalize_embeddings: bool):
+            return [1.0, 0.0]
+
+    fake_module = ModuleType("sentence_transformers")
+    fake_module.SentenceTransformer = FakeModel
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
+    monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
+    monkeypatch.delenv("NEWS_RAG_EMBEDDING_PROVIDER", raising=False)
+
+    store = build_vector_store(Settings(vector_store_dir=tmp_path))
+
+    assert store.embedding_provider.provider_id == (
+        "sentence-transformers:sentence-transformers/all-MiniLM-L6-v2"
+    )
+    assert store.embedding_warning is None
+
+
+def test_vector_store_falls_back_to_hash_with_clear_warning_when_package_missing(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+    _load_sentence_transformer.cache_clear()
+    monkeypatch.delenv("NEWS_RAG_VECTOR_BACKEND", raising=False)
+    monkeypatch.delenv("NEWS_RAG_EMBEDDING_PROVIDER", raising=False)
+
+    store = build_vector_store(Settings(vector_store_dir=tmp_path))
+
+    assert isinstance(store.embedding_provider, HashEmbeddingProvider)
+    assert store.embedding_warning == EMBEDDING_FALLBACK_MESSAGE
 
 
 def test_vector_store_factory_rejects_unknown_backend(tmp_path, monkeypatch) -> None:

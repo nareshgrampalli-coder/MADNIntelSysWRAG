@@ -3,6 +3,7 @@
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
@@ -35,6 +36,16 @@ class EmbeddingProvider(Protocol):
     def embed(self, text: str) -> list[float]: ...
 
 
+EMBEDDING_FALLBACK_MESSAGE = (
+    "sentence-transformers is not installed, so the app is using HashEmbeddingProvider. "
+    'Install it with `py -m pip install -e ".[embeddings]"` to enable semantic embeddings.'
+)
+
+
+class EmbeddingDependencyMissing(RuntimeError):
+    pass
+
+
 class HashEmbeddingProvider:
     """Deterministic local embeddings for development and tests."""
 
@@ -61,14 +72,8 @@ class SentenceTransformerEmbeddingProvider:
     """Optional local sentence-transformers embeddings."""
 
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> None:
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError as error:
-            raise RuntimeError(
-                "Install the 'embeddings' extra to use sentence-transformers"
-            ) from error
         self.model_name = model_name
-        self.model = SentenceTransformer(model_name)
+        self.model = _load_sentence_transformer(model_name)
 
     @property
     def provider_id(self) -> str:
@@ -248,34 +253,59 @@ class ChromaVectorStore:
 def build_vector_store(settings: object) -> VectorStore:
     """Build the configured backend, defaulting to the local JSON store."""
     backend = os.getenv("NEWS_RAG_VECTOR_BACKEND", "json").casefold()
+    if backend not in {"json", "chroma"}:
+        raise ValueError("NEWS_RAG_VECTOR_BACKEND must be 'json' or 'chroma'")
     path = settings.vector_store_dir
-    embedding_provider = _build_embedding_provider(
-        getattr(settings, "embedding_provider", None) or os.getenv("NEWS_RAG_EMBEDDING_PROVIDER", "hash"),
+    provider_name = (
+        getattr(settings, "embedding_provider", None)
+        or os.getenv("NEWS_RAG_EMBEDDING_PROVIDER", "sentence-transformers")
+    )
+    embedding_provider, embedding_warning = _build_embedding_provider(
+        provider_name,
         getattr(settings, "embedding_model", None) or os.getenv("NEWS_RAG_EMBEDDING_MODEL", ""),
     )
     if backend == "chroma":
-        return ChromaVectorStore(path, embedding_provider=embedding_provider)
+        store = ChromaVectorStore(path, embedding_provider=embedding_provider)
+        store.embedding_warning = embedding_warning
+        return store
     if backend == "json":
         max_age_days = int(os.getenv("NEWS_RAG_MAX_AGE_DAYS", "14"))
-        return JsonVectorStore(
+        store = JsonVectorStore(
             path / "vectors.json",
             embedding_provider=embedding_provider,
             max_age_days=max_age_days,
         )
+        store.embedding_warning = embedding_warning
+        return store
     raise ValueError("NEWS_RAG_VECTOR_BACKEND must be 'json' or 'chroma'")
 
 
-def _build_embedding_provider(provider_name: str, model_name: str) -> EmbeddingProvider:
+def _build_embedding_provider(
+    provider_name: str,
+    model_name: str,
+) -> tuple[EmbeddingProvider, str | None]:
     normalized = provider_name.casefold().replace("_", "-")
     if normalized == "hash":
-        return HashEmbeddingProvider()
+        return HashEmbeddingProvider(), None
     if normalized in {"sentence-transformers", "sentence-transformer"}:
-        return SentenceTransformerEmbeddingProvider(
-            model_name or "sentence-transformers/all-MiniLM-L6-v2"
-        )
+        try:
+            return SentenceTransformerEmbeddingProvider(
+                model_name or "sentence-transformers/all-MiniLM-L6-v2"
+            ), None
+        except EmbeddingDependencyMissing:
+            return HashEmbeddingProvider(), EMBEDDING_FALLBACK_MESSAGE
     raise ValueError(
         "NEWS_RAG_EMBEDDING_PROVIDER must be 'hash' or 'sentence-transformers'"
     )
+
+
+@lru_cache(maxsize=2)
+def _load_sentence_transformer(model_name: str):
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as error:
+        raise EmbeddingDependencyMissing(EMBEDDING_FALLBACK_MESSAGE) from error
+    return SentenceTransformer(model_name)
 
 
 def _record_published_at(record: dict[str, object]) -> datetime:

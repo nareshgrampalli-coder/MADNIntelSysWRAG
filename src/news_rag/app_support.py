@@ -108,7 +108,7 @@ def verify_grounding_quality(store: VectorStore) -> dict[str, bool]:
     """Confirm supported questions cite evidence and unsupported ones refuse."""
     engine = QueryEngine(store, retrieval_limit=3)
     supported = engine.answer("latest news", relevance_threshold=0.0)
-    unsupported = engine.answer("news about an imaginary event on Mars", relevance_threshold=0.5)
+    unsupported = engine.answer("news about qzxvplm quorvex 8f41c", relevance_threshold=0.5)
     return {
         "supported:cited": supported.grounded and bool(supported.citations),
         "unsupported:refused": not unsupported.grounded and not unsupported.citations,

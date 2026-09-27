@@ -26,8 +26,8 @@ This is the consolidated improvement plan. It replaces the undated and 2026-09-2
 
 ## Phase 3 — Retrieval and embeddings
 
-- [x] Keep the dependency-free `HashEmbeddingProvider` as the default and test fallback.
-- [x] Add optional local sentence-transformers embeddings configured with `NEWS_RAG_EMBEDDING_PROVIDER` and `NEWS_RAG_EMBEDDING_MODEL`.
+- [x] Use sentence-transformers by default, with `HashEmbeddingProvider` fallback and a visible UI warning if the dependency is missing.
+- [x] Allow local sentence-transformers model selection through `NEWS_RAG_EMBEDDING_MODEL`.
 - [x] Use the configured provider with both JSON and Chroma vector-store backends.
 - [x] Detect persisted indexes built with a different provider/model and require reset plus re-ingestion.
 - [x] Combine lexical and vector similarity and apply relevance/recency reranking.
