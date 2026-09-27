@@ -4,6 +4,7 @@ from app import apply_filters, build_sample_questions, build_todays_briefing, ci
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.app_support import (
     build_contextual_question,
+    initialize_ingestion_status,
     retrieval_metrics,
     verify_grounding_quality,
     verify_query_interpretation,
@@ -26,6 +27,19 @@ def test_scheduled_ingestion_interval_is_optional_and_validated(monkeypatch) -> 
 
     monkeypatch.setenv("NEWS_RAG_AUTO_INGEST_SECONDS", "3600")
     assert scheduled_ingestion_interval() == 3600.0
+
+
+def test_new_page_session_requires_ingestion_even_when_index_already_exists() -> None:
+    session_state = {}
+
+    initialize_ingestion_status(session_state)
+
+    assert session_state["ingestion_completed"] is False
+
+    session_state["ingestion_completed"] = True
+    initialize_ingestion_status(session_state)
+
+    assert session_state["ingestion_completed"] is True
 
 
 def test_trim_sentence_keeps_short_lines_and_cuts_at_sentence_boundary() -> None:

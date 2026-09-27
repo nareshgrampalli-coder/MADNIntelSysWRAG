@@ -1,10 +1,16 @@
 """Application-facing data preparation helpers."""
 
+from collections.abc import Callable, MutableMapping
 from datetime import datetime, timezone
 
 from .models import NewsCategory, QueryResponse
 from .query_engine import QueryEngine, QueryInterpreter
 from .vector_store import VectorStore
+
+
+def initialize_ingestion_status(session_state: MutableMapping[str, object]) -> None:
+    """Require ingestion in a fresh session while preserving this session's result."""
+    session_state.setdefault("ingestion_completed", False)
 
 
 def build_contextual_question(messages: list[dict[str, str]], question: str) -> str:

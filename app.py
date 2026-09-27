@@ -16,6 +16,7 @@ from news_rag.app_support import (
     build_sample_questions,
     build_contextual_question,
     build_todays_briefing,
+    initialize_ingestion_status,
     verify_grounding_quality,
     verify_query_interpretation,
     retrieval_metrics,
@@ -67,6 +68,7 @@ def main() -> None:
     engine = QueryEngine(store)
     pipeline = build_pipeline(store, settings.data_dir / "http_cache")
     auto_ingest_seconds = scheduled_ingestion_interval()
+    initialize_ingestion_status(st.session_state)
 
     @st.fragment(run_every=auto_ingest_seconds)
     def run_scheduled_ingestion() -> None:
@@ -82,9 +84,6 @@ def main() -> None:
             st.warning("Scheduled ingestion failed: " + "; ".join(report.errors))
 
     run_scheduled_ingestion()
-    if store.count() > 0:
-        st.session_state.setdefault("ingestion_completed", True)
-
     @st.dialog("Article details")
     def show_article_details(title: str, source: str, published_date: str, summary: str, url: str) -> None:
         st.subheader(title)
@@ -119,6 +118,8 @@ def main() -> None:
                 f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
                 unsafe_allow_html=True,
             )
+            if store.count() > 0:
+                st.info("For a clean re-ingestion, reset indexed chunks data before running ingestion.")
         else:
             st.markdown(
                 f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
