@@ -15,6 +15,7 @@ from news_rag.app_support import (
     build_sample_questions,
     build_contextual_question,
     build_todays_briefing,
+    verify_grounding_quality,
     verify_query_interpretation,
     verify_retrieval_quality,
 )
@@ -126,23 +127,28 @@ def main() -> None:
                 ) or "no category data"
                 retrieval_coverage = verify_retrieval_quality(store)
                 interpretation_checks = verify_query_interpretation()
+                grounding_checks = verify_grounding_quality(store)
                 coverage_counts = ", ".join(
                     f"{category.value}: {count}"
                     for category, count in retrieval_coverage.items()
                 )
                 uncovered = [category.value for category, count in retrieval_coverage.items() if count == 0]
                 interpretation_passed = sum(interpretation_checks.values())
+                grounding_passed = sum(grounding_checks.values())
                 st.success(
                     f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
                     f"By category: {category_counts}. "
                     f"Retrieval check: {coverage_counts}. "
                     f"Query interpretation: {interpretation_passed}/{len(interpretation_checks)} checks passed. "
+                    f"Grounding: {grounding_passed}/{len(grounding_checks)} checks passed. "
                     f"Ingestion time: {elapsed_seconds:.1f}s."
                 )
                 if uncovered:
                     st.warning("No retrievable evidence found for: " + ", ".join(uncovered) + ".")
                 if interpretation_passed < len(interpretation_checks):
                     st.warning("One or more query interpretation checks failed.")
+                if grounding_passed < len(grounding_checks):
+                    st.warning("Grounding verification failed: supported answers must cite evidence and unsupported questions must refuse.")
             else:
                 st.warning(
                     "Ingestion completed with errors: "

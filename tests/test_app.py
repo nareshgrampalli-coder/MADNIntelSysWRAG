@@ -4,6 +4,7 @@ from app import apply_filters, build_sample_questions, build_todays_briefing, ci
 from news_rag.models import ArticleChunk, NewsCategory, QueryResponse, SourceCitation
 from news_rag.app_support import (
     build_contextual_question,
+    verify_grounding_quality,
     verify_query_interpretation,
     verify_retrieval_quality,
 )
@@ -162,6 +163,28 @@ def test_build_contextual_question_handles_followups_and_repeats() -> None:
         "What is the Nifty 50 target? What are the risks?"
     )
     assert build_contextual_question(messages, "What is the Nifty 50 target?") == messages[0]["content"]
+
+
+def test_verify_grounding_quality_checks_citations_and_refusal(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            ArticleChunk(
+                chunk_id="grounded",
+                article_url="https://example.com/grounded",
+                text="India markets opened higher today",
+                chunk_index=0,
+                category=NewsCategory.FINANCE,
+                source="Example News",
+                published_at=datetime(2026, 9, 27, tzinfo=timezone.utc),
+                metadata={"title": "India markets update"},
+            )
+        ]
+    )
+
+    checks = verify_grounding_quality(store)
+
+    assert checks == {"supported:cited": True, "unsupported:refused": True}
 
 
 def test_build_todays_briefing_excludes_stale_articles(tmp_path) -> None:
