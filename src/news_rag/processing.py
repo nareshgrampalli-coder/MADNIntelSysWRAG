@@ -64,6 +64,8 @@ def extract_entities(text: str) -> tuple[str, ...]:
 
 def process_article(article: RawArticle) -> ProcessedArticle:
     cleaned = clean_text(article.content)
+    source_summary = clean_text(article.summary)
+    summary = summarize(source_summary) if source_summary else summarize(cleaned)
     return ProcessedArticle(
         article=RawArticle(
             title=article.title,
@@ -72,8 +74,9 @@ def process_article(article: RawArticle) -> ProcessedArticle:
             published_at=article.published_at,
             content=cleaned,
             category=article.category,
+            summary=source_summary or summary,
         ),
-        summary=summarize(cleaned),
+        summary=summary,
         tags=derive_tags(cleaned, article.category),
         entities=extract_entities(cleaned),
     )

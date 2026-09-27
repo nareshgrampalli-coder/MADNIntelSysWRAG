@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from dataclasses import replace
 
 import pytest
 
@@ -32,6 +33,19 @@ def test_process_article_preserves_provenance_and_derives_metadata() -> None:
     assert "policy" in processed.tags
     assert "RBI" in processed.entities
     assert processed.summary.startswith("RBI announced")
+
+
+def test_process_article_prefers_clean_rss_summary_to_hydrated_page_lead() -> None:
+    article = replace(
+        ARTICLE,
+        content="Author biography comes first. RBI details follow in the article body.",
+        summary="<p>RBI cut the repo rate by 25 basis points.</p>",
+    )
+
+    processed = process_article(article)
+
+    assert processed.summary == "RBI cut the repo rate by 25 basis points."
+    assert processed.article.summary == "RBI cut the repo rate by 25 basis points."
 
 
 def test_chunk_article_preserves_provenance_and_respects_limit() -> None:

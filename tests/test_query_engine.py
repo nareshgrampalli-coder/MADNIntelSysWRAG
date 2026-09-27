@@ -147,6 +147,90 @@ def test_query_engine_formats_news_summary_as_bullets(tmp_path) -> None:
     assert response.answer.count("\n- ") == 1
 
 
+def test_query_engine_uses_rss_summary_instead_of_author_bio_for_news_summary(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            replace(
+                make_chunk("rbi", NewsCategory.FINANCE, 0, "The author is a financial journalist and editor."),
+                metadata={
+                    "title": "RBI lowers repo rate",
+                    "summary": "RBI cut the repo rate by 25 basis points, signaling an easing stance.",
+                },
+            ),
+        ]
+    )
+
+    response = QueryEngine(store).answer("Summarize today's finance news")
+
+    assert response.grounded is True
+    assert "RBI cut the repo rate by 25 basis points" in response.answer
+    assert "journalist" not in response.answer
+
+
+def test_query_engine_uses_headlines_for_daily_news_questions(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            replace(
+                make_chunk("rbi", NewsCategory.FINANCE, 0, "The author is a financial journalist. RBI cut rates today."),
+                metadata={"title": "RBI lowers repo rate", "summary": "A financial journalist with years of experience."},
+            )
+        ]
+    )
+
+    response = QueryEngine(store, interpreter=QueryInterpreter(clock=lambda: datetime.now(timezone.utc))).answer(
+        "What happened in finance today?"
+    )
+
+    assert response.grounded is True
+    assert response.answer == "- RBI lowers repo rate."
+    assert response.citations[0].url.endswith("/rbi")
+
+
+def test_query_engine_rejects_misclassified_technology_headlines(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            replace(
+                make_chunk("diplomacy", NewsCategory.TECHNOLOGY, 0, "Diplomatic talks continued today."),
+                metadata={"title": "Brics can serve as a platform for talks and cooperation"},
+            )
+        ]
+    )
+
+    response = QueryEngine(store).answer("What are today's top technology headlines?")
+
+    assert response.grounded is False
+    assert response.citations == ()
+
+
+def test_query_engine_rejects_oversized_summary_metadata(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+    store.upsert(
+        [
+            replace(
+                make_chunk("rbi", NewsCategory.FINANCE, 0, "RBI cut the repo rate today."),
+                metadata={"title": "RBI lowers repo rate", "summary": "A financial journalist. " * 80},
+            )
+        ]
+    )
+
+    response = QueryEngine(store).answer("Summarize today's finance news")
+
+    assert response.answer == "- RBI lowers repo rate."
+
+
+def test_query_engine_refuses_absolute_future_certainty(tmp_path) -> None:
+    store = JsonVectorStore(tmp_path / "vectors.json")
+
+    response = QueryEngine(store).answer("What will definitely happen in markets next month?")
+
+    assert response.grounded is False
+    assert response.citations == ()
+    assert "forecasts" in response.answer
+
+
 def test_query_engine_summarizes_noisy_article_text(tmp_path) -> None:
     store = JsonVectorStore(tmp_path / "vectors.json")
     store.upsert(

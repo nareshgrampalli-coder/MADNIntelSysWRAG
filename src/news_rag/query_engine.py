@@ -40,6 +40,41 @@ class QueryInterpreter:
         return QueryFilters(category=category, published_after=published_after)
 
 
+def _is_summary_request(question: str) -> bool:
+    return bool(re.search(r"\b(?:summari[sz]e|summary|overview|roundup)\b", question.casefold()))
+
+
+def _is_headline_request(question: str) -> bool:
+    normalized = question.casefold()
+    if _is_summary_request(question) and any(category.value in normalized for category in NewsCategory):
+        return False
+    return bool(
+        re.search(r"\bheadlines?\b", normalized)
+        or re.search(r"\bwhat happened\b", normalized)
+        or re.search(r"\b(?:today|latest|recent)\b.*\bnews\b", normalized)
+        or _is_summary_request(question) and re.search(r"\b(?:today|latest|recent)\b", normalized)
+    )
+
+
+def _requests_certain_future(question: str) -> bool:
+    normalized = question.casefold()
+    certainty = re.search(r"\b(?:definitely|certainly|guaranteed|for sure|without fail)\b", normalized)
+    future = re.search(r"\b(?:will|happen|future|next month|next year)\b", normalized)
+    return bool(certainty and future)
+
+
+def _headline_matches_category(chunk: ArticleChunk, category: NewsCategory) -> bool:
+    topic_terms = {
+        NewsCategory.TECHNOLOGY: ("technology", "tech", "software", "artificial intelligence", "cyber", "chip", "gadget"),
+        NewsCategory.FINANCE: ("finance", "financial", "money", "insurance", "tax", "salary", "bank", "rbi", "investment", "market", "stock", "nre"),
+        NewsCategory.POLITICS: ("politic", "government", "minister", "parliament", "election", "vote", "diplomat", "diplomacy", "policy", "bjp"),
+        NewsCategory.STOCKS: ("stock", "market", "nifty", "sensex", "share", "investor", "investment"),
+        NewsCategory.SPORTS: ("sport", "game", "athlete", "player", "match", "tournament", "medal", "badminton", "cricket"),
+    }
+    title = chunk.metadata.get("title", "").casefold()
+    return any(term in title for term in topic_terms[category])
+
+
 class ExtractiveAnswerGenerator:
     """Provider-neutral fallback that answers strictly from retrieved chunks."""
 
@@ -51,8 +86,25 @@ class ExtractiveAnswerGenerator:
         seen: set[str] = set()
         order = 0
         for chunk in chunks:
-            text = _clean_excerpt(chunk.text)
-            for sentence in re.split(r"(?<=[.!?])\s+", text):
+            title = _clean_excerpt(chunk.metadata.get("title", ""))
+            headline_request = _is_headline_request(question)
+            using_title_fallback = headline_request
+            if headline_request:
+                text = title
+            else:
+                text = chunk.metadata.get("summary", "") if _is_summary_request(question) else ""
+            text = _clean_excerpt(text) if text else ""
+            if text and (len(text) > 600 or len(text) < 40 and _is_summary_request(question)):
+                text = title
+                using_title_fallback = True
+            if text and title and not using_title_fallback:
+                text = re.sub(rf"^{re.escape(title)}[\s|:.-]*", "", text, flags=re.IGNORECASE)
+            if using_title_fallback and (len(title) < 20 or title.casefold() in {"stock market news", "today news", "news"}):
+                continue
+            if not text:
+                text = _clean_excerpt(chunk.text)
+            sentences = [text] if using_title_fallback else re.split(r"(?<=[.!?])\s+", text)
+            for sentence in sentences:
                 sentence = sentence.strip(" -")
                 key = sentence.casefold()
                 if len(sentence) < 15 or key in seen:
@@ -79,12 +131,17 @@ def _clean_excerpt(value: str) -> str:
 
 def _summary_terms(question: str) -> set[str]:
     stopwords = {
-        "a", "about", "an", "and", "are", "can", "did", "for", "give", "how", "in", "is", "me",
-        "more", "news", "of", "on", "please", "recent", "summarize", "tell", "the", "this", "today",
-        "what", "when", "which", "why", "with", "you",
+        "a", "about", "an", "and", "are", "be", "been", "but", "bullet", "bullets", "can", "certainly",
+        "did", "do", "does", "focus", "for", "from", "give", "guaranteed", "happen", "happened", "has", "have", "headline", "headlines", "how", "i",
+        "in", "is", "it", "latest", "me", "more", "news", "next", "of", "on", "or", "overall", "please",
+        "points", "recent", "should", "since", "summarize", "summary", "tell", "than", "that", "the", "this", "top",
+        "today", "todays", "was", "were", "what", "when", "which", "why", "will", "with", "without", "would",
+        "you", "s",
     }
+    normalized = question.casefold().replace("’", "'")
+    normalized = re.sub(r"(?<=\w)'s\b", "", normalized)
     return {
-        term for term in re.findall(r"[a-z0-9]+", question.casefold())
+        term for term in re.findall(r"[a-z0-9]+", normalized)
         if term not in stopwords and not term.isdigit()
     }
 
@@ -110,7 +167,17 @@ class QueryEngine:
     ) -> QueryResponse:
         if _requests_each_category(question):
             return self._answer_each_category()
+        if _requests_certain_future(question):
+            return QueryResponse(
+                answer="I can't determine what will definitely happen. I can summarize reported forecasts, but they remain uncertain."
+            )
+        distinct_articles = distinct_articles or _is_summary_request(question) or _is_headline_request(question)
         filters = self.interpreter.interpret(question)
+        minimum_relevance = relevance_threshold
+        if (_is_summary_request(question) or _is_headline_request(question)) and filters.category:
+            broad_terms = {filters.category.value.casefold(), "stock", "stocks", "market", "markets"}
+            if _summary_terms(question) <= broad_terms:
+                minimum_relevance = 0.0
         candidate_limit = (
             self.store.count()
             if distinct_articles
@@ -122,11 +189,13 @@ class QueryEngine:
             published_after=filters.published_after,
             limit=candidate_limit,
         )
+        if _is_headline_request(question) and filters.category:
+            chunks = [chunk for chunk in chunks if _headline_matches_category(chunk, filters.category)]
         chunks = _rerank(
             question,
             chunks,
             now=self.interpreter.clock(),
-            minimum_relevance=relevance_threshold,
+            minimum_relevance=minimum_relevance,
         )
         if _requests_single_article(question):
             focused_chunks = _focus_article_chunks(question, chunks)
@@ -275,16 +344,7 @@ def _rerank(
 
 
 def _term_overlap(query: str, document: str) -> float:
-    stopwords = {
-        "a", "about", "after", "an", "and", "ask", "bullet", "bullets", "can", "did", "for", "give", "in", "is",
-        "i", "in", "latest", "me", "news", "of", "on", "overall", "points", "recent", "since",
-        "summarize", "summary", "tell", "todays", "you",
-        "the", "today", "what", "which", "why", "should", "focus",
-    }
-    query_terms = {
-        term for term in re.findall(r"[a-z0-9]+", query.casefold())
-        if term not in stopwords and not term.isdigit()
-    }
+    query_terms = _summary_terms(query)
     document_terms = set(re.findall(r"[a-z0-9]+", document.casefold()))
     if "stock" in query_terms:
         query_terms.add("stocks")
