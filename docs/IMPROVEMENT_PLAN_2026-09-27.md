@@ -4,7 +4,7 @@ This is the consolidated improvement plan. It replaces the undated and 2026-09-2
 
 ## Phase 1 — Reliability and data freshness
 
-- [x] Preserve ingestion completion across app restarts when indexed data already exists.
+- [x] Preserve ingestion completion across Streamlit reruns in the current session; require fresh-session ingestion even when indexed data already exists.
 - [x] Use sentence-boundary trimming for long chat responses.
 - [x] Remove the unused Run RAG pipeline UI and keep the interval scheduler for the worker.
 - [x] Evict stale JSON vector records using configurable `NEWS_RAG_MAX_AGE_DAYS` (default 14).
@@ -19,8 +19,10 @@ This is the consolidated improvement plan. It replaces the undated and 2026-09-2
 - [x] Allow multiple configured RSS feeds per category; deduplicate and return up to the newest three articles per category.
 - [x] Filter on category relevance and India relevance using article title and original RSS summary.
 - [x] Hydrate article pages when available and fall back to the RSS item content when hydration fails or yields no text.
+- [x] Preserve the original RSS summary in processed article metadata for summary answers.
 - [x] Clean common navigation, ad, subscription, and session boilerplate; deduplicate by URL and content.
 - [ ] Improve detection and rejection of pages that return boilerplate or too little meaningful article text.
+- [ ] Validate feed category assignment against article headlines to reduce miscategorized indexed stories.
 - [ ] Complete source licensing, robots-policy, and rate-limit review for configured publishers.
 - [ ] Add a CI smoke test for configured LiveMint and Yahoo feed availability.
 
@@ -39,6 +41,7 @@ This is the consolidated improvement plan. It replaces the undated and 2026-09-2
 
 - [x] Keep the deterministic extractive generator as the default; use retrieved chunks and citations.
 - [x] Return a no-answer response when relevant evidence is unavailable.
+- [x] Use article headlines for daily digests, filter category headlines for headline-level topic evidence, and refuse requests for certainty about future outcomes.
 - [x] Add ingestion-time retrieval, interpretation, and grounding verification probes.
 - [x] Add regression coverage for article-level coherence on forward-looking stock-market questions.
 - [ ] Add an optional LLM-based grounded answer generator that answers only from supplied chunks and cites supporting articles.

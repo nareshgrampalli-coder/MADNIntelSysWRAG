@@ -16,7 +16,7 @@ The Streamlit application is the public-facing user interface.
 
 ## Does the app ingest data when it opens?
 
-No. Ingestion runs only when you click **Run ingestion**. However, if the store already contains indexed chunks from a previous run, the app recognizes this and enables chat immediately without re-ingesting.
+No. Ingestion runs only when you click **Run ingestion**. A fresh Streamlit session requires a successful ingestion before chat is enabled, even if the persistent store already contains chunks. The completion state is retained across reruns within that session.
 
 ## What categories are supported?
 
@@ -46,7 +46,7 @@ The **Run ingestion** button in the sidebar executes the full data pipeline for 
 
 8. **Verify the indexed data** — runs category retrieval checks, query interpretation checks, and grounding checks. Supported sample queries must return citations; unsupported queries must refuse without citations.
 
-When the run finishes, the sidebar reports article and chunk counts, per-category retrieval counts, total retrieved sources, category coverage percentage, interpretation results, grounding results, and total ingestion time. Individual feed failures include the feed name and URL. Chat is unlocked only after a successful ingestion, or automatically when the store already contains indexed data from a previous run.
+When the run finishes, the sidebar reports article and chunk counts, per-category retrieval counts, total retrieved sources, category coverage percentage, interpretation results, grounding results, and total ingestion time. Individual feed failures include the feed name and URL. Chat is unlocked only after a successful ingestion in the current session. If an existing index contains stale summaries or incorrect category labels, reset it before ingestion to rebuild the stored metadata.
 
 Use **Reset indexed chunked data** first if you want a completely fresh index before re-ingesting.
 
@@ -63,7 +63,7 @@ A complete RAG pipeline has eight stages. **Run ingestion** performs stages 1–
 | 5 | Query Processing (interpret category/date filters) | Verification probe | Per user question |
 | 6 | Similarity Search (retrieve relevant chunks) | Verification probe | Per user question |
 | 7 | Evidence Selection (pass retrieved chunks to the extractive generator) | Verification probe | Per user question |
-| 8 | Response Generation (extract relevant sentences or refuse without evidence) | Grounding probe | Per user question |
+| 8 | Response Generation (extract relevant sentences, use article headlines for daily digests, or refuse without evidence) | Grounding probe | Per user question |
 
 ## What does Run Ingestion verify?
 
@@ -79,12 +79,13 @@ After Run Ingestion completes, ask a question in chat (for example, `Summarize t
 
 You can ask category and date-aware questions such as:
 
-- `Summarize todays news in 3 bullet points.`
+- `Summarize today's news in 3 bullet points.`
 - `Summarize in 3 bullet points for each category.`
 - `What is stock news today?`
 - `What happened in finance this week?`
+- `What are today's technology headlines?`
 
-Broad summaries return only the available indexed evidence and do not invent missing stories.
+Daily headline digests use indexed article titles. Category headline requests with no topic-matching titles return no matching sources rather than repeating unrelated items. Category summaries use the RSS summary when available; broad summaries return only indexed evidence and do not invent missing stories.
 
 ## How does the app handle stale news?
 

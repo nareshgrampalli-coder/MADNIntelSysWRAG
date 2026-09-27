@@ -6,8 +6,12 @@
 - Ingestion considers up to 15 RSS entries per feed, hydrates article pages, applies category relevance and India relevance using the title and original RSS summary, deduplicates, and returns up to three newest articles per category.
 - Today's Briefing retrieves article-diverse evidence, limiting results to up to three distinct current-day articles per category rather than counting multiple chunks from one article.
 - Retrieval defaults to local sentence-transformers plus lexical scoring/reranking; if the dependency is missing, it falls back to deterministic hash embeddings and displays a warning. Answers remain extractive and grounded; no LLM is wired in.
+- Category summaries preserve and use the original RSS summary when available. Daily headline digests use article titles, reject generic or unrelated category headlines, and refuse requests for certainty about future events.
+- Chat requires a successful ingestion in the current Streamlit session; persisted indexed chunks alone do not unlock a fresh session. Reset and re-ingest to replace stale summaries or category metadata.
+- A live simulation of the current 55-chunk index found political/diplomatic stories mislabeled as Technology. Technology headline questions now return no answer for these unrelated titles; feed classification quality remains a coverage limitation.
+- The Streamlit sidebar workflow, extractive answer generation, embedding providers, and RSS transport/parsing are separated into focused modules; existing imports remain compatible.
 - HTTP caching, per-feed failure details, retrieval/interpretation/grounding probes, and optional in-app scheduled ingestion are implemented.
-- Latest full test run recorded for this snapshot: 88 passed.
+- Latest full test run recorded for this snapshot: 95 passed.
 
 ## Current phase
 
@@ -45,6 +49,7 @@ Phase 8 - Vercel Deployment: **complete**
 - Added Vercel function configuration, API CORS headers, a health endpoint, and deployment documentation.
 - Added a deployment configuration test.
 - Added hybrid lexical/semantic retrieval with relevance and recency reranking.
+- Preserved source RSS summaries through processing and added title-based daily digests, topical checks for category headlines, and cautious refusal for future-certainty requests.
 - Added source relevance rules, approved RSS URL configuration, and filtering tests.
 - Added the standalone scheduled ingestion worker with daily/hourly intervals.
 - Added Chroma query support, vector backend selection, structured worker logs, and health metadata.
@@ -62,7 +67,7 @@ Phase 8 - Vercel Deployment: **complete**
 - Phase 5 tests cover date/category filters, recency ordering, citations, explicit dates, and no-answer behavior.
 - Phase 6 tests cover filter composition and citation rendering.
 - Today's Briefing tests cover date-aware domain summaries and citation-backed output.
-- Streamlit browser validation remains pending; the UI dependency is installed and the app is configured for Streamlit Community Cloud.
+- Streamlit browser validation confirmed the local app renders its fresh-session filters, ingestion status, empty state, and disabled chat input; the UI dependency is installed and the app is configured for Streamlit Community Cloud.
 - Phase 7 tests cover evaluation dataset loading, category counts, and score aggregation.
 - Vercel preview and production API deployments have completed; preview health verification remains protected by deployment access controls.
 - Streamlit Community Cloud deployment is configured for `app.py`; cloud storage remains ephemeral without an external vector backend.

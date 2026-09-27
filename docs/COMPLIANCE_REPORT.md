@@ -20,13 +20,13 @@
 | Scheduled orchestration | Complete for MVP | `worker.py` runs the interval scheduler as a standalone process, supports daily/hourly intervals through `NEWS_RAG_INTERVAL_SECONDS`, and handles graceful shutdown. Durable hosting remains an operational deployment task. |
 | Failure handling, retries, and run logging | Complete for MVP | RSS retries, fetcher isolation, run reports, timestamps, and errors are implemented and tested. |
 | Deduplication and boilerplate cleaning | Complete | URL/content-hash deduplication and deterministic HTML/boilerplate cleaning are implemented and tested. |
-| Summaries, tags, entities, and category metadata | Complete for MVP | Processing derives extractive summaries, tags, entities, and category metadata. |
+| Summaries, tags, entities, and category metadata | Complete for MVP | Processing preserves RSS summaries when supplied and derives a fallback summary, tags, entities, and category metadata. |
 | Up to 400-word article chunks | Complete for MVP | Bounded word-based chunking is implemented with provenance preservation. |
 | Embeddings and vector database | Complete for MVP | Sentence-transformers is the default with hash fallback if its package is missing. Persistent JSON storage and an optional ChromaDB adapter are available. Select backend with `NEWS_RAG_VECTOR_BACKEND`; Chroma runtime validation depends on its optional extra. |
 | Rich metadata filtering | Complete | Category, publication date, source, URL, entities, and ingestion metadata are stored or preserved for retrieval. |
 | Query interpretation | Complete for MVP | Category, relative date ranges, and explicit dates are supported. |
 | Hybrid search and reranking | Complete for MVP | JSON retrieval combines semantic similarity with lexical term overlap, then the query engine reranks candidates by relevance and bounded recency. A production-scale reranker remains optional. |
-| Grounded answer generation | Complete for MVP | Extractive answers use retrieved evidence and refuse when no evidence matches. No hosted or local LLM adapter is implemented/configured. |
+| Grounded answer generation | Complete for MVP | Category summaries use stored RSS summaries when available; daily digests use retrieved article titles with headline-level category checks; other answers extract from retrieved evidence. Unsupported future-certainty requests and queries without matching evidence are refused. No hosted or local LLM adapter is implemented/configured. |
 | Citations with links and dates | Complete | Query responses expose source citations and the Streamlit UI renders links and publication dates. |
 | Streamlit chat interface | Complete | `app.py` provides chat, filters, date selection, loading/error states, ingestion, and Today's Briefing. |
 | 20-30 evaluation questions and scoring | Complete for MVP | Twenty evaluation cases, scoring utilities, and a reviewer-ready scorecard with rubric and reproducibility instructions are present. Measured scores remain blank until a representative news snapshot is captured. |
@@ -59,7 +59,7 @@ The Vercel API uses the standard library and does not require the vector or UI e
 
 ## Validation Evidence
 
-- Full automated test suite at this review: **88 passed**.
+- Full automated test suite at this review: **95 passed**.
 - Requirements dependency dry run: **successful**.
 - Vercel preview deployment: **successful** after configuring `api.health:handler`.
 - Vercel production health API: deployed under the `news-rag` project.

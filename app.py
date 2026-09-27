@@ -1,9 +1,6 @@
 """Streamlit user interface for the News RAG application."""
 
-from concurrent.futures import ThreadPoolExecutor
-from itertools import cycle
 import os
-from queue import Empty, Queue
 from time import monotonic
 
 from news_rag.config import Settings
@@ -19,12 +16,9 @@ from news_rag.app_support import (
     build_contextual_question,
     build_todays_briefing,
     initialize_ingestion_status,
-    verify_grounding_quality,
-    verify_query_interpretation,
-    retrieval_metrics,
-    verify_retrieval_quality,
 )
 from news_rag.briefing_view import render_todays_briefing
+from news_rag.ingestion_view import render_ingestion_sidebar
 from news_rag.ui_styles import apply_styles
 
 
@@ -99,117 +93,16 @@ def main() -> None:
         st.write(summary)
         st.link_button("Read full article", url)
 
-    with st.sidebar:
-        st.header("Filters")
-        if getattr(store, "embedding_warning", None):
-            st.warning(store.embedding_warning)
-        category_value = st.selectbox("Category", ["All", *[category_label(category) for category in NewsCategory]])
-        start_date = st.date_input("Published after", value=None)
-        st.divider()
-        show_briefing = st.checkbox("Today's Briefing", value=False)
-        st.metric("Indexed chunks", store.count())
-        if st.button("Reset Indexed chunks data", type="tertiary"):
-            store.reset()
-            st.session_state.ingestion_completed = False
-            st.session_state.pop("briefing_ingestion_date", None)
-            st.rerun()
-        ingestion_done = st.session_state.get("ingestion_completed", False)
-        ingestion_color = "#198754" if ingestion_done else "#dc3545"
-        ingestion_label = "Complete" if ingestion_done else "Required"
-        if not ingestion_done:
-            st.markdown(
-                f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
-                unsafe_allow_html=True,
-            )
-            if store.count() > 0:
-                st.info("For a clean re-ingestion, reset indexed chunks data before running ingestion.")
-        else:
-            st.markdown(
-                f'<div style="color:{ingestion_color};font-weight:700">Run Ingestion: {ingestion_label}</div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                """
-                <style>
-                section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {
-                    background-color: #198754;
-                    border-color: #198754;
-                    color: white;
-                }
-                section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {
-                    background-color: #157347;
-                    border-color: #146c43;
-                    color: white;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
-        if st.button("Run ingestion", type="primary" if ingestion_done else "secondary"):
-            started = monotonic()
-            progress_messages: Queue[str] = Queue()
-            idle_messages = cycle((
-                "Checking the latest headlines for India relevance...",
-                "Gathering article text from matching stories...",
-                "Preparing news from all categories for indexing...",
-                "Building searchable citations from the selected stories...",
-            ))
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(pipeline.run_once, progress_messages.put)
-                with st.status("Starting the news harvest...", expanded=True) as status:
-                    while not future.done():
-                        try:
-                            message = progress_messages.get(timeout=1)
-                        except Empty:
-                            message = next(idle_messages)
-                        status.update(label=message, state="running")
-                    report = future.result()
-                    status.update(label="News index updated.", state="complete")
-            elapsed_seconds = monotonic() - started
-            if report.succeeded:
-                st.session_state.ingestion_completed = True
-            if report.succeeded:
-                category_counts = ", ".join(
-                    f"{category}: {count}" for category, count in sorted(report.articles_by_category.items())
-                ) or "no category data"
-                retrieval_coverage = verify_retrieval_quality(store)
-                retrieval_summary = retrieval_metrics(retrieval_coverage)
-                interpretation_checks = verify_query_interpretation()
-                grounding_checks = verify_grounding_quality(store)
-                coverage_counts = ", ".join(
-                    f"{category.value}: {count}"
-                    for category, count in retrieval_coverage.items()
-                )
-                uncovered = [category.value for category, count in retrieval_coverage.items() if count == 0]
-                interpretation_passed = sum(interpretation_checks.values())
-                grounding_passed = sum(grounding_checks.values())
-                st.success(
-                    f"Stored {report.chunks_stored} chunks from {report.articles_fetched} articles. "
-                    f"By category: {category_counts}. "
-                    f"Retrieval check: {coverage_counts}. "
-                    f"Sources retrieved: {retrieval_summary['total_sources']}; "
-                    f"category coverage: {retrieval_summary['coverage_percent']:.1f}%. "
-                    f"Query interpretation: {interpretation_passed}/{len(interpretation_checks)} checks passed. "
-                    f"Grounding: {grounding_passed}/{len(grounding_checks)} checks passed. "
-                    f"Ingestion time: {elapsed_seconds:.1f}s."
-                )
-                if uncovered:
-                    st.warning("No retrievable evidence found for: " + ", ".join(uncovered) + ".")
-                if interpretation_passed < len(interpretation_checks):
-                    st.warning("One or more query interpretation checks failed.")
-                if grounding_passed < len(grounding_checks):
-                    st.warning("Grounding verification failed: supported answers must cite evidence and unsupported questions must refuse.")
-            else:
-                st.warning(f"Ingestion completed with {len(report.errors)} error(s). Ingestion time: {elapsed_seconds:.1f}s.")
-                for error in report.errors:
-                    st.error(error)
+    def reset_ingestion_state() -> None:
+        st.session_state.ingestion_completed = False
+        st.session_state.pop("briefing_ingestion_date", None)
 
-        with st.expander("Sample questions for today"):
-            st.markdown("- Summarize todays news in 3 bullet points.")
-            st.markdown("- Summarize in 3 bullet points for each category.")
-            st.markdown("- What is stock news today?")
-            st.markdown("- What happened in finance this week?")
-            st.markdown("- Which news should I focus on today?")
+    category_value, start_date, show_briefing = render_ingestion_sidebar(
+        st,
+        store,
+        pipeline,
+        reset_ingestion_state,
+    )
 
     @st.fragment
     def render_briefing() -> None:
@@ -231,31 +124,6 @@ def main() -> None:
             st.markdown(message["content"])
 
     chat_disabled = not st.session_state.get("ingestion_completed", False)
-    if chat_disabled:
-        st.markdown(
-            """
-            <style>
-            [data-testid="stChatInput"] {
-                position: relative;
-            }
-            [data-testid="stChatInput"]:hover::after {
-                content: "Click Run ingestion to load news before asking a question.";
-                position: absolute;
-                left: 0;
-                bottom: calc(100% + 0.4rem);
-                z-index: 10;
-                padding: 0.45rem 0.65rem;
-                border-radius: 0.35rem;
-                background: #212529;
-                color: #fff;
-                font-size: 0.8rem;
-                pointer-events: none;
-                white-space: nowrap;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
     question = st.chat_input(
         "Click Run Ingestion button to ask questions" if chat_disabled else "Ask about recent news",
         disabled=chat_disabled,

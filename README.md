@@ -29,16 +29,20 @@ Run scheduled ingestion with `py worker.py`. Set `NEWS_RAG_INTERVAL_SECONDS=3600
 
 Default RSS feeds are LiveMint for Technology, Finance, Politics, Stocks, and Sports, plus Yahoo Finance for Finance. Each category can use comma-separated custom feeds through `NEWS_RAG_<CATEGORY>_RSS_URLS`; operator-approved URLs can be set with the matching `NEWS_RAG_<CATEGORY>_APPROVED_RSS_URLS` variables. Approved URLs take precedence over regular overrides. Legacy `news.google.com` overrides are ignored. Articles are filtered for category relevance and India relevance before indexing.
 
-The current answer generator is deterministic and extractive; no LLM is configured. Sentence-transformers is the default embedding provider, using `sentence-transformers/all-MiniLM-L6-v2`; if the package is missing, the app automatically falls back to `HashEmbeddingProvider` and displays a warning. Install the model dependency with `py -m pip install -e ".[embeddings]"`; the model downloads on first use. After changing provider or model, reset indexed data and re-ingest because vectors from different embedding spaces cannot be mixed.
+The current answer generator is deterministic and extractive; no LLM is configured. Daily headline and unscoped daily-summary questions use indexed article titles, while category summaries use preserved RSS summaries when available. The query engine refuses unsupported future-certainty questions and filters category headline results against headline topic evidence; incorrect feed category labels can still limit coverage. Sentence-transformers is the default embedding provider, using `sentence-transformers/all-MiniLM-L6-v2`; if the package is missing, the app automatically falls back to `HashEmbeddingProvider` and displays a warning. Install the model dependency with `py -m pip install -e ".[embeddings]"`; the model downloads on first use. After changing provider or model, reset indexed data and re-ingest because vectors from different embedding spaces cannot be mixed.
 
 ## Repository structure
 
 - `app.py`: Streamlit chat, filters, manual ingestion, and optional Today's Briefing
 - `src/news_rag/models.py`: shared domain contracts
-- `src/news_rag/ingestion.py`: RSS parsing and domain fetchers
+- `src/news_rag/rss.py`: RSS retrieval, caching, parsing, and article hydration
+- `src/news_rag/ingestion.py`: domain fetchers, deduplication, and category quotas
 - `src/news_rag/processing.py`: deterministic cleaning, enrichment, and chunking
-- `src/news_rag/vector_store.py`: embeddings and persistent vector-store adapters
+- `src/news_rag/embeddings.py`: hash and sentence-transformer embedding providers
+- `src/news_rag/vector_store.py`: JSON and optional Chroma vector-store adapters
 - `src/news_rag/orchestration.py`: manual pipeline runs and interval scheduling
+- `src/news_rag/answer_generation.py`: query intent classification and extractive answer generation
+- `src/news_rag/ingestion_view.py`: Streamlit sidebar filters and ingestion workflow
 - `worker.py`: standalone scheduled ingestion worker
 - `api/health.py`: Vercel health endpoint with deployment metadata
 - `src/news_rag/query_engine.py`: date-aware retrieval, extractive grounded answers, and citations
